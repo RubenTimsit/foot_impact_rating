@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==================== RÈGLES POUR LA COLLECTION GROUPES ====================
+    
+    // Collection groupes : lecture publique, pas d'écriture directe
+    match /groupes/{groupeId} {
+      // Tout le monde peut lire les infos des groupes (codes, noms)
+      allow read: if true;
+      
+      // Personne ne peut créer/modifier/supprimer directement
+      // (sauf via setup-groupes.html en développement)
+      allow write: if false;
+      
+      // ==================== SOUS-COLLECTION JOUEURS ====================
+      match /joueurs/{joueurId} {
+        // Tout le monde peut lire la liste des joueurs
+        allow read: if true;
+        
+        // Tout le monde peut ajouter un nouveau joueur
+        allow create: if true;
+        
+        // Personne ne peut modifier ou supprimer (sauf admin)
+        // Pour une vraie sécurité, utilise Firebase Authentication
+        allow update, delete: if false;
+      }
+      
+      // ==================== SOUS-COLLECTION MATCHS ====================
+      match /matchs/{matchId} {
+        // Tout le monde peut lire l'historique des matchs
+        allow read: if true;
+        
+        // Personne ne peut écrire (sauf admin via le panel)
+        // Pour sécuriser, tu dois ajouter Firebase Auth
+        allow write: if false;
+      }
+      
+      // ==================== SOUS-COLLECTION SYNERGIES ====================
+      match /synergies/{synergieId} {
+        // Tout le monde peut lire les synergies
+        allow read: if true;
+        
+        // Personne ne peut écrire (calculées automatiquement)
+        allow write: if false;
+      }
+    }
+  }
+}
+
+// ==================== RÈGLES AVANCÉES (AVEC FIREBASE AUTH) ====================
+// Décommente et configure si tu veux une vraie authentification admin
+
+/*
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Fonction pour vérifier si l'utilisateur est admin
+    function isAdmin() {
+      // Remplace TON_UID_ADMIN par ton vrai UID Firebase
+      return request.auth != null && request.auth.uid == "TON_UID_ADMIN";
+    }
+    
+    match /groupes/{groupeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      
+      match /joueurs/{joueurId} {
+        allow read: if true;
+        allow create: if true;  // Tout le monde peut ajouter un joueur
+        allow update, delete: if isAdmin();  // Seul l'admin peut modifier/supprimer
+      }
+      
+      match /matchs/{matchId} {
+        allow read: if true;
+        allow write: if isAdmin();  // Seul l'admin peut créer des matchs
+      }
+      
+      match /synergies/{synergieId} {
+        allow read: if true;
+        allow write: if isAdmin();  // Seul l'admin peut modifier les synergies
+      }
+    }
+  }
+}
+*/
+

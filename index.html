@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact Rating - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="logo">⚽</span>
+                <span class="brand-name">Impact Rating</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Dashboard</a></li>
+                <li><a href="synergies.html">Synergies</a></li>
+                <li><a href="historique.html">Historique</a></li>
+                <li><a href="algorithm.html">Algorithme</a></li>
+                <li><a href="admin-login.html" class="admin-btn">Admin</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <div id="groupe-badge" class="groupe-badge" style="display: none;">
+                <span id="groupe-name">Chargement...</span>
+            </div>
+            <h1>Dashboard des Joueurs</h1>
+            <p class="subtitle">Classement basé sur l'Impact Rating</p>
+            <button id="add-player-btn" class="btn btn-primary" style="margin-top: 1rem;">
+                ➕ Ajouter un joueur
+            </button>
+        </section>
+
+        <section class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <h3 id="total-joueurs">0</h3>
+                    <p>Joueurs</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-content">
+                    <h3 id="total-matchs">0</h3>
+                    <p>Matchs joués</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚽</div>
+                <div class="stat-content">
+                    <h3 id="total-buts">0</h3>
+                    <p>Buts marqués</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="players-section">
+            <div class="section-header">
+                <h2>Classement des Joueurs</h2>
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">Tous</button>
+                    <button class="filter-btn" data-filter="Défenseur">Défenseurs</button>
+                    <button class="filter-btn" data-filter="Milieu">Milieux</button>
+                    <button class="filter-btn" data-filter="Attaquant">Attaquants</button>
+                </div>
+            </div>
+
+            <div class="players-table">
+                <table id="players-list">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Joueur</th>
+                            <th>Position</th>
+                            <th>Impact Rating</th>
+                            <th>Matchs</th>
+                            <th>V-N-D</th>
+                            <th>Présence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="players-tbody">
+                        <!-- Rempli dynamiquement -->
+                        <tr class="loading-row">
+                            <td colspan="7">
+                                <div class="loading-spinner"></div>
+                                <p>Chargement des données...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Impact Rating - Fait avec ⚽ par Ruben</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
+

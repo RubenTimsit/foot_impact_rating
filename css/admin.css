@@ -1,0 +1,421 @@
+/* ==================== ADMIN LOGIN ==================== */
+.admin-login-section {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+}
+
+.login-card {
+    background: var(--card-bg);
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-hover);
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+}
+
+.login-card h1 {
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+}
+
+.login-form {
+    margin-top: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* ==================== BUTTONS ==================== */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #27ae60;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: var(--text-dark);
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+.btn-large {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+}
+
+/* ==================== MESSAGES ==================== */
+.error-message {
+    background: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid var(--danger-color);
+    color: var(--danger-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.success-message {
+    background: rgba(46, 204, 113, 0.1);
+    border-left: 4px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+/* ==================== ADMIN SECTION ==================== */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.admin-header h1 {
+    color: var(--text-dark);
+}
+
+/* ==================== TABS ==================== */
+.admin-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 1rem 2rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: var(--transition);
+}
+
+.tab-btn:hover {
+    color: var(--primary-color);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content h2 {
+    color: var(--text-dark);
+    margin-bottom: 2rem;
+}
+
+.tab-content h3 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+/* ==================== MATCH FORM ==================== */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.equipes-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.equipe-section {
+    background: var(--bg-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+
+.equipe-section h3 {
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+/* ==================== JOUEURS SELECT ==================== */
+.joueurs-select {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+}
+
+.joueur-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.joueur-checkbox:hover {
+    background: var(--border-color);
+}
+
+.joueur-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.joueur-info {
+    flex: 1;
+}
+
+.joueur-name {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.joueur-details {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+/* ==================== INFO BANNER ==================== */
+.info-banner {
+    background: rgba(52, 152, 219, 0.1);
+    border-left: 4px solid var(--accent-color);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    color: var(--text-dark);
+}
+
+.info-banner a {
+    text-decoration: none;
+}
+
+.info-banner a:hover {
+    text-decoration: underline;
+}
+
+/* ==================== INLINE FORM ==================== */
+.inline-form {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.inline-form input,
+.inline-form select {
+    flex: 1;
+    min-width: 150px;
+}
+
+.inline-form .btn {
+    white-space: nowrap;
+}
+
+/* ==================== PLAYERS LIST ADMIN ==================== */
+.players-list-admin {
+    margin-top: 2rem;
+}
+
+.admin-player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.admin-player-info {
+    flex: 1;
+}
+
+.admin-player-info strong {
+    color: var(--text-dark);
+}
+
+.admin-player-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* ==================== TEAMS RESULT ==================== */
+.teams-result {
+    margin-top: 2rem;
+}
+
+.team-proposal {
+    background: var(--bg-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.team-proposal h4 {
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.teams-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.team-box {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.team-box h5 {
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+}
+
+.team-stats {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.team-stats p {
+    margin: 0.5rem 0;
+    color: var(--text-light);
+}
+
+/* ==================== JOUEURS SELECT GRID ==================== */
+.joueurs-select-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .login-card {
+        padding: 2rem;
+        margin: 1rem;
+    }
+
+    .admin-tabs {
+        gap: 0.5rem;
+    }
+
+    .tab-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .equipes-container {
+        grid-template-columns: 1fr;
+    }
+
+    .teams-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .inline-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .inline-form input,
+    .inline-form select {
+        width: 100%;
+    }
+}
+

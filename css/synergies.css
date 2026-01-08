@@ -1,0 +1,333 @@
+/* ==================== SYNERGIES PAGE ==================== */
+
+/* ==================== GROUPES SECTION ==================== */
+.groupes-section {
+    margin-bottom: 3rem;
+}
+
+.groupes-section h2 {
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.groupes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.groupe-card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border-top: 4px solid var(--primary-color);
+}
+
+.groupe-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-4px);
+}
+
+.groupe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.groupe-type {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--primary-color);
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.groupe-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.groupe-joueurs {
+    margin-bottom: 1rem;
+}
+
+.groupe-joueurs h4 {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.joueurs-names {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.joueur-tag {
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-color);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.groupe-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.groupe-stat {
+    text-align: center;
+}
+
+.groupe-stat-value {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+}
+
+.groupe-stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+/* ==================== MATRICE SECTION ==================== */
+.matrice-section {
+    margin-bottom: 3rem;
+}
+
+.matrice-section h2 {
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.matrice-container {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+}
+
+.synergies-matrix {
+    min-width: 600px;
+}
+
+.matrix-row {
+    display: flex;
+}
+
+.matrix-cell {
+    flex: 1;
+    min-width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.matrix-cell.header {
+    background: var(--bg-color);
+    font-weight: 700;
+    color: var(--secondary-color);
+    cursor: default;
+}
+
+.matrix-cell.positive {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--primary-color);
+}
+
+.matrix-cell.positive:hover {
+    background: rgba(46, 204, 113, 0.2);
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+.matrix-cell.negative {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+}
+
+.matrix-cell.negative:hover {
+    background: rgba(231, 76, 60, 0.2);
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+.matrix-cell.neutral {
+    background: var(--bg-color);
+    color: var(--text-light);
+}
+
+.matrix-cell.diagonal {
+    background: var(--secondary-color);
+    color: white;
+    cursor: default;
+}
+
+/* Tooltip pour la matrice */
+.matrix-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--secondary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    z-index: 100;
+}
+
+.matrix-cell:hover .matrix-tooltip {
+    display: block;
+}
+
+/* ==================== TOP SYNERGIES ==================== */
+.top-synergies {
+    margin-bottom: 3rem;
+}
+
+.top-synergies h2 {
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.synergies-list {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.synergie-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: var(--transition);
+}
+
+.synergie-item:hover {
+    box-shadow: var(--shadow);
+    transform: translateX(5px);
+}
+
+.synergie-rank {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-light);
+    width: 40px;
+    text-align: center;
+}
+
+.synergie-joueurs {
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.synergie-joueurs strong {
+    color: var(--text-dark);
+    font-size: 1.1rem;
+}
+
+.synergie-details {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 0.25rem;
+}
+
+.synergie-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.synergie-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.synergie-label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+/* Medals pour le top 3 */
+.synergie-item:nth-child(1) .synergie-rank {
+    color: #FFD700; /* Or */
+}
+
+.synergie-item:nth-child(2) .synergie-rank {
+    color: #C0C0C0; /* Argent */
+}
+
+.synergie-item:nth-child(3) .synergie-rank {
+    color: #CD7F32; /* Bronze */
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .groupes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .matrice-container {
+        padding: 1rem;
+    }
+
+    .matrix-cell {
+        min-width: 50px;
+        height: 50px;
+        font-size: 0.8rem;
+    }
+
+    .synergie-item {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .synergie-rank {
+        width: 30px;
+        font-size: 1.2rem;
+    }
+
+    .synergie-joueurs {
+        margin-left: 0.5rem;
+    }
+
+    .synergie-score {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+}
+

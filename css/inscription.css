@@ -1,0 +1,305 @@
+/* ==================== INSCRIPTION PAGE ==================== */
+
+.inscription-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.inscription-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    background: var(--card-bg);
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 3rem;
+}
+
+.inscription-info h2 {
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.info-list {
+    list-style: none;
+    margin-bottom: 2rem;
+}
+
+.info-list li {
+    padding: 1rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.info-box {
+    background: rgba(46, 204, 113, 0.05);
+    border-left: 4px solid var(--primary-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.info-box h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.info-box p {
+    color: var(--text-light);
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.info-box p strong {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.info-box .note {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    font-style: italic;
+}
+
+/* ==================== FORM CONTAINER ==================== */
+
+.inscription-form-container {
+    background: var(--bg-color);
+    padding: 2rem;
+    border-radius: 12px;
+}
+
+.inscription-form-container h2 {
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.form-description {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+/* ==================== CHECK SECTION ==================== */
+
+.check-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.check-form input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.check-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#check-result {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+#check-result.already-exists {
+    background: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid var(--danger-color);
+    color: var(--danger-color);
+}
+
+#check-result.available {
+    background: rgba(46, 204, 113, 0.1);
+    border-left: 4px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* ==================== FORM ==================== */
+
+#inscription-form {
+    margin-top: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.required {
+    color: var(--danger-color);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+/* ==================== CHECKBOX ==================== */
+
+.checkbox-group {
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-label span {
+    color: var(--text-dark);
+}
+
+/* ==================== JOUEURS INSCRITS ==================== */
+
+.joueurs-inscrits {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.joueurs-inscrits h2 {
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.joueurs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.joueur-card {
+    background: var(--bg-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    transition: var(--transition);
+    border: 2px solid transparent;
+}
+
+.joueur-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.joueur-avatar {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.joueur-nom {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.joueur-position {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.joueur-position.defenseur {
+    background: rgba(52, 152, 219, 0.15);
+    color: #2980b9;
+}
+
+.joueur-position.milieu {
+    background: rgba(46, 204, 113, 0.15);
+    color: #27ae60;
+}
+
+.joueur-position.attaquant {
+    background: rgba(231, 76, 60, 0.15);
+    color: #c0392b;
+}
+
+.joueur-rating {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 968px) {
+    .inscription-card {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 2rem;
+    }
+    
+    .check-form {
+        flex-direction: column;
+    }
+    
+    .joueurs-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .inscription-card {
+        padding: 1.5rem;
+    }
+    
+    .inscription-form-container {
+        padding: 1.5rem;
+    }
+    
+    .joueurs-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+

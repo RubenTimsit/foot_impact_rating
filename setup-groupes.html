@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Groupes - Impact Rating</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .setup-container {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        .code-card {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .code-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="setup-container">
+            <h1>🔧 Configuration des Groupes</h1>
+            <p class="subtitle">Génère 5 codes d'activation pour tes groupes</p>
+            
+            <div id="status" style="margin: 2rem 0;"></div>
+            
+            <button id="generate-btn" class="btn btn-primary btn-large" style="margin-bottom: 2rem;">
+                🎲 Générer les 5 codes de groupes
+            </button>
+            
+            <div id="codes-list"></div>
+            
+            <div id="instructions" class="hidden" style="margin-top: 2rem; padding: 1.5rem; background: rgba(46, 204, 113, 0.1); border-left: 4px solid var(--primary-color); border-radius: 8px;">
+                <h3>✅ Codes créés avec succès !</h3>
+                <p><strong>Prochaines étapes :</strong></p>
+                <ol>
+                    <li>Note ces codes quelque part (ou prends une capture d'écran)</li>
+                    <li>Partage chaque code au groupe correspondant</li>
+                    <li>Les joueurs pourront s'inscrire avec leur code de groupe</li>
+                    <li>Tu peux maintenant supprimer ce fichier <code>setup-groupes.html</code> du serveur</li>
+                </ol>
+            </div>
+        </div>
+    </main>
+    
+    <script type="module">
+        import { db, collection, addDoc, getDocs, COLLECTIONS } from './js/firebase-config.js';
+        
+        const generateBtn = document.getElementById('generate-btn');
+        const statusDiv = document.getElementById('status');
+        const codesList = document.getElementById('codes-list');
+        const instructions = document.getElementById('instructions');
+        
+        // Vérifier si des groupes existent déjà
+        window.addEventListener('DOMContentLoaded', async () => {
+            const existing = await getDocs(collection(db, COLLECTIONS.GROUPES));
+            if (!existing.empty) {
+                statusDiv.innerHTML = `
+                    <div style="background: rgba(231, 76, 60, 0.1); padding: 1rem; border-left: 4px solid var(--danger-color); border-radius: 8px;">
+                        <strong>⚠️ Des groupes existent déjà !</strong><br>
+                        ${existing.size} groupe(s) trouvé(s). Supprime-les manuellement dans Firebase si tu veux regénérer.
+                    </div>
+                `;
+                generateBtn.disabled = true;
+                
+                // Afficher les groupes existants
+                displayExistingCodes(existing.docs);
+            }
+        });
+        
+        function displayExistingCodes(docs) {
+            codesList.innerHTML = '<h3>Groupes existants :</h3>';
+            docs.forEach(doc => {
+                const data = doc.data();
+                codesList.innerHTML += `
+                    <div class="code-card">
+                        <div>
+                            <div><strong>${data.nomGroupe}</strong></div>
+                            <div class="code-display">${data.code}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 0.25rem;">ID: ${doc.id}</div>
+                        </div>
+                        <div style="color: var(--text-light); font-size: 0.85rem;">
+                            Créé le ${new Date(data.dateCreation).toLocaleDateString('fr-FR')}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        generateBtn.addEventListener('click', async () => {
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Génération en cours...';
+            statusDiv.innerHTML = '<p style="color: var(--text-light);">Création des groupes dans Firebase...</p>';
+            
+            try {
+                // 5 groupes avec des codes uniques
+                const groupes = [
+                    { code: 'ROSLAN', nomGroupe: 'Roslan FC' },
+                    { code: 'ZIDANE', nomGroupe: 'Zidane FC' },
+                    { code: 'NEYMAR', nomGroupe: 'Neymar FC' },
+                    { code: 'SUAREZ', nomGroupe: 'Suarez FC' },
+                    { code: 'MODRIC', nomGroupe: 'Modric FC' }
+                ];
+                
+                const createdGroups = [];
+                
+                for (const groupe of groupes) {
+                    const docRef = await addDoc(collection(db, COLLECTIONS.GROUPES), {
+                        code: groupe.code,
+                        nomGroupe: groupe.nomGroupe,
+                        dateCreation: new Date().toISOString(),
+                        actif: true
+                    });
+                    
+                    createdGroups.push({
+                        ...groupe,
+                        id: docRef.id
+                    });
+                }
+                
+                // Afficher les groupes créés
+                statusDiv.innerHTML = `
+                    <div style="background: rgba(46, 204, 113, 0.1); padding: 1rem; border-left: 4px solid var(--primary-color); border-radius: 8px;">
+                        <strong>✅ 5 groupes créés avec succès !</strong>
+                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Chaque groupe a maintenant ses propres sous-collections pour les joueurs, matchs et synergies.</p>
+                    </div>
+                `;
+                
+                codesList.innerHTML = '<h3>Tes codes de groupes :</h3>';
+                createdGroups.forEach(groupe => {
+                    codesList.innerHTML += `
+                        <div class="code-card">
+                            <div>
+                                <div><strong>${groupe.nomGroupe}</strong></div>
+                                <div class="code-display">${groupe.code}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 0.25rem;">ID Firestore: ${groupe.id}</div>
+                            </div>
+                            <button onclick="navigator.clipboard.writeText('${groupe.code}')" class="btn btn-secondary btn-small">
+                                📋 Copier
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                instructions.classList.remove('hidden');
+                
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div style="background: rgba(231, 76, 60, 0.1); padding: 1rem; border-left: 4px solid var(--danger-color); border-radius: 8px;">
+                        <strong>❌ Erreur :</strong> ${error.message}
+                    </div>
+                `;
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎲 Réessayer';
+            }
+        });
+    </script>
+</body>
+</html>
+

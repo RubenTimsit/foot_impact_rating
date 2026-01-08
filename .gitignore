@@ -1,0 +1,47 @@
+# Fichiers système Windows
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Fichiers système macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Éditeurs et IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Fichiers temporaires
+*.tmp
+*.temp
+*.cache
+
+# Node modules (si tu en utilises)
+node_modules/
+npm-debug.log
+
+# Environnement (si tu utilises des variables d'env)
+.env
+.env.local
+.env.*.local
+
+# Dossiers de build (optionnel)
+dist/
+build/
+
+# Fichiers de test (optionnel)
+test/
+coverage/
+
+# Fichiers spécifiques au projet (optionnel)
+# setup-groupes.html (décommenter après avoir créé les groupes)

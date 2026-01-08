@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique - Impact Rating</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="logo">⚽</span>
+                <span class="brand-name">Impact Rating</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="synergies.html">Synergies</a></li>
+                <li><a href="historique.html" class="active">Historique</a></li>
+                <li><a href="algorithm.html">Algorithme</a></li>
+                <li><a href="admin-login.html" class="admin-btn">Admin</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <h1>Historique des Matchs</h1>
+            <p class="subtitle">Tous les matchs joués</p>
+        </section>
+
+        <section class="matchs-section">
+            <div id="matchs-list" class="matchs-list">
+                <div class="loading-row">
+                    <div class="loading-spinner"></div>
+                    <p>Chargement des matchs...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Impact Rating - Fait avec ⚽ par Ruben</p>
+        </div>
+    </footer>
+
+    <script type="module" src="js/historique.js"></script>
+</body>
+</html>
+
