@@ -6,6 +6,7 @@ Un système intelligent pour créer des équipes équilibrées et suivre la perf
 
 - ⚡ **[Démarrage Rapide](QUICKSTART.md)** - Setup en 5 minutes ! 🚀
 - 🔥 **[Configuration Firebase](FIREBASE_SETUP.md)** - Guide détaillé pour configurer Firebase
+- 🔒 **[Sécurité Firebase](SECURITE_FIREBASE.md)** - Pourquoi tes clés peuvent être publiques (important !)
 - 🔄 **[Migration Nouvelle Structure](MIGRATION_NOUVELLE_STRUCTURE.md)** - Structure hiérarchique avec sous-collections
 - 🚀 **[Déploiement GitHub Pages](DEPLOIEMENT_GITHUB_PAGES.md)** - Héberger ton site gratuitement
 - 🔐 **[firestore.rules](firestore.rules)** - Règles de sécurité Firestore à copier-coller

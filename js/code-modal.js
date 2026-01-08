@@ -29,7 +29,7 @@ function createModal() {
                             type="text" 
                             id="modal-code-input" 
                             class="modal-input"
-                            placeholder="Ex: ROSLAN"
+                            placeholder="Ex: ABCDEF"
                             maxlength="6"
                             autocomplete="off"
                             required

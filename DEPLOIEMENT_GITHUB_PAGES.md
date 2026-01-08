@@ -56,6 +56,14 @@ Ton fichier `js/firebase-config.js` doit contenir tes vraies clés Firebase.
 - Les clés API Firebase sont conçues pour être publiques
 - La vraie sécurité vient des **Firestore Security Rules**
 
+> 🔒 **Questions sur la sécurité ?** Lis le guide complet : **[SECURITE_FIREBASE.md](SECURITE_FIREBASE.md)**
+> 
+> Ce guide explique en détail :
+> - Pourquoi c'est sécurisé d'avoir les clés visibles
+> - Comment fonctionne vraiment la sécurité Firebase
+> - Les meilleures pratiques de sécurité
+> - Documentation officielle Google
+
 ---
 
 ## 🔐 Étape 2 : Sécuriser Firebase (IMPORTANT)
