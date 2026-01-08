@@ -2,6 +2,8 @@
 import { db, collection, getDocs, addDoc, query, orderBy, where, COLLECTIONS } from './firebase-config.js';
 import { checkAndShowModal, showCodeModal } from './code-modal.js';
 import { creerNouveauJoueur } from './rating-system.js';
+import { clearCodeGroupe } from './groupe-manager.js';
+import { showConfirmModal } from './confirm-modal.js';
 
 // ==================== VARIABLES GLOBALES ====================
 let joueurs = [];
@@ -125,9 +127,9 @@ function updateStats() {
     document.getElementById('total-joueurs').textContent = joueurs.length;
     document.getElementById('total-matchs').textContent = matchs.length;
     
-    // Calculer le total de buts
-    const totalButs = matchs.reduce((sum, match) => {
-        return sum + (match.equipe1Score || 0) + (match.equipe2Score || 0);
+    // Calculer le total de buts marqués par les joueurs
+    const totalButs = joueurs.reduce((sum, joueur) => {
+        return sum + (joueur.butsMarques || 0);
     }, 0);
     document.getElementById('total-buts').textContent = totalButs;
 }
@@ -144,7 +146,7 @@ function displayPlayers() {
     if (filteredJoueurs.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center">
+                <td colspan="8" class="text-center">
                     <p style="padding: 2rem; color: var(--text-light);">
                         ${joueurs.length === 0 
                             ? '⚠️ Aucun joueur enregistré. Configure Firebase ou ajoute des joueurs depuis la page Admin.' 
@@ -156,7 +158,18 @@ function displayPlayers() {
         return;
     }
     
-    tbody.innerHTML = filteredJoueurs.map((joueur, index) => `
+    tbody.innerHTML = filteredJoueurs.map((joueur, index) => {
+        const butsMarques = joueur.butsMarques || 0;
+        const butsCsc = joueur.butsContresonCamp || 0;
+        const cleanSheets = joueur.cleanSheets || 0;
+        
+        // Affichage des buts avec contexte
+        let butsHTML = `<span style="font-weight: 600; color: var(--primary-color);">${butsMarques}</span>`;
+        if (butsCsc > 0) {
+            butsHTML += ` <span style="color: var(--danger-color); font-size: 0.85rem;">(${butsCsc} CSC)</span>`;
+        }
+        
+        return `
         <tr>
             <td><strong>${index + 1}</strong></td>
             <td><strong>${joueur.nom}</strong></td>
@@ -169,6 +182,7 @@ function displayPlayers() {
                 <span class="rating-value">${joueur.impactRating}</span>
             </td>
             <td>${joueur.matchsJoues}</td>
+            <td>${butsHTML}</td>
             <td>
                 <span style="color: var(--primary-color);">${joueur.victoires}</span> - 
                 <span style="color: var(--text-light);">${joueur.nuls || 0}</span> - 
@@ -181,7 +195,51 @@ function displayPlayers() {
                 <span>${Math.round(joueur.tauxPresence * 100)}%</span>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
+}
+
+// ==================== CHANGEMENT DE GROUPE ====================
+async function handleChangeGroupe() {
+    // Confirmer avec l'utilisateur
+    const confirmChange = await showConfirmModal(
+        'Voulez-vous changer de groupe ?',
+        'Vous allez être déconnecté du groupe actuel et vous devrez entrer un nouveau code.'
+    );
+    
+    if (!confirmChange) {
+        return;
+    }
+    
+    // Effacer le groupe actuel du localStorage
+    clearCodeGroupe();
+    
+    console.log('🔄 Changement de groupe - localStorage effacé');
+    
+    // Réinitialiser les données
+    joueurs = [];
+    matchs = [];
+    groupeActuel = null;
+    
+    // Masquer le badge du groupe
+    const groupeBadge = document.getElementById('groupe-badge');
+    if (groupeBadge) {
+        groupeBadge.style.display = 'none';
+    }
+    
+    // Afficher le modal pour entrer un nouveau code
+    groupeActuel = await showCodeModal(async (groupe) => {
+        console.log('✅ Nouveau groupe sélectionné:', groupe);
+        groupeActuel = groupe;
+        
+        // Afficher le nom du groupe
+        displayGroupeName();
+        
+        // Recharger les données
+        await loadData();
+        updateStats();
+        displayPlayers();
+    });
 }
 
 // ==================== SETUP DES FILTRES ====================
@@ -208,6 +266,12 @@ function setupFilters() {
     const addPlayerBtn = document.getElementById('add-player-btn');
     if (addPlayerBtn) {
         addPlayerBtn.addEventListener('click', showAddPlayerModal);
+    }
+    
+    // Bouton changer de groupe
+    const changeGroupeBtn = document.getElementById('change-groupe-btn');
+    if (changeGroupeBtn) {
+        changeGroupeBtn.addEventListener('click', handleChangeGroupe);
     }
 }
 

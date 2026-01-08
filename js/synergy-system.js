@@ -7,10 +7,9 @@
  * @param {string} joueurId2 - ID du deuxième joueur
  * @param {string} resultat - 'victoire', 'nul', ou 'defaite'
  * @param {number} scoreDiff - Différence de score (positif si victoire)
- * @param {string} codeGroupe - Code du groupe (optionnel)
  * @returns {Object} Synergies mises à jour
  */
-export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, resultat, scoreDiff = 0, codeGroupe = null) {
+export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, resultat, scoreDiff = 0) {
     // Créer une clé unique (toujours dans le même ordre)
     const cle = [joueurId1, joueurId2].sort().join('-');
     
@@ -25,11 +24,6 @@ export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, r
             nuls: 0,
             defaites: 0
         };
-        
-        // Ajouter le code groupe si fourni
-        if (codeGroupe) {
-            synergiesExistantes[cle].codeGroupe = codeGroupe;
-        }
     }
     
     const synergie = synergiesExistantes[cle];
@@ -59,10 +53,9 @@ export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, r
  * @param {Array} equipe - Tableau des IDs des joueurs de l'équipe
  * @param {string} resultat - 'victoire', 'nul', ou 'defaite'
  * @param {number} scoreDiff - Différence de score
- * @param {string} codeGroupe - Code du groupe (optionnel)
  * @returns {Object} Synergies mises à jour
  */
-export function mettreAJourSynergiesEquipe(synergiesExistantes, equipe, resultat, scoreDiff = 0, codeGroupe = null) {
+export function mettreAJourSynergiesEquipe(synergiesExistantes, equipe, resultat, scoreDiff = 0) {
     // Pour chaque paire de joueurs dans l'équipe
     for (let i = 0; i < equipe.length; i++) {
         for (let j = i + 1; j < equipe.length; j++) {
@@ -71,8 +64,7 @@ export function mettreAJourSynergiesEquipe(synergiesExistantes, equipe, resultat
                 equipe[i],
                 equipe[j],
                 resultat,
-                scoreDiff,
-                codeGroupe
+                scoreDiff
             );
         }
     }

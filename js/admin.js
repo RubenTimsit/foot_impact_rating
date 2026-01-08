@@ -4,7 +4,9 @@ import { db, auth, collection, getDocs, addDoc, updateDoc, doc, query, orderBy, 
 import { calculerChangementsMatch, creerNouveauJoueur } from './rating-system.js';
 import { mettreAJourSynergiesEquipe } from './synergy-system.js';
 import { equilibrerEquipes } from './team-balancer.js';
-import { checkAndShowModal } from './code-modal.js';
+import { checkAndShowModal, showCodeModal } from './code-modal.js';
+import { clearCodeGroupe } from './groupe-manager.js';
+import { showConfirmModal } from './confirm-modal.js';
 
 // Code admin simple (à changer !)
 const ADMIN_CODE = "foot2026";
@@ -69,6 +71,7 @@ async function showAdminPanel() {
         groupeActuel = groupe;
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('admin-section').classList.remove('hidden');
+        displayGroupeName();
         await loadAllData();
         await initMatchForm();
         await initTeamBalancer();
@@ -80,6 +83,9 @@ async function showAdminPanel() {
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('admin-section').classList.remove('hidden');
         
+        // Afficher le nom du groupe
+        displayGroupeName();
+        
         // Charger les données
         await loadAllData();
     
@@ -87,6 +93,12 @@ async function showAdminPanel() {
         await initMatchForm();
         await initTeamBalancer();
         await initPlayerManagement();
+    }
+    
+    // Bouton changer de groupe
+    const changeGroupeBtn = document.getElementById('change-groupe-btn-admin');
+    if (changeGroupeBtn) {
+        changeGroupeBtn.addEventListener('click', handleChangeGroupe);
     }
 }
 
@@ -121,6 +133,47 @@ async function loadAllData() {
         synergies = {};
         console.log('📝 Aucune donnée trouvée, démarrage avec une base vide');
     }
+}
+
+// ==================== AFFICHAGE DU NOM DU GROUPE ====================
+function displayGroupeName() {
+    const groupeBadge = document.getElementById('groupe-badge-admin');
+    const groupeName = document.getElementById('groupe-name-admin');
+    
+    if (groupeActuel && groupeBadge && groupeName) {
+        groupeName.textContent = groupeActuel.nomGroupe;
+        groupeBadge.style.display = 'inline-flex';
+    }
+}
+
+// ==================== CHANGEMENT DE GROUPE ====================
+async function handleChangeGroupe() {
+    const confirmChange = await showConfirmModal(
+        'Voulez-vous changer de groupe ?',
+        'Vous allez être déconnecté du groupe actuel et vous devrez entrer un nouveau code.'
+    );
+    
+    if (!confirmChange) return;
+    
+    clearCodeGroupe();
+    console.log('🔄 Changement de groupe - localStorage effacé');
+    
+    joueurs = [];
+    synergies = {};
+    groupeActuel = null;
+    
+    const groupeBadge = document.getElementById('groupe-badge-admin');
+    if (groupeBadge) groupeBadge.style.display = 'none';
+    
+    groupeActuel = await showCodeModal(async (groupe) => {
+        console.log('✅ Nouveau groupe sélectionné:', groupe);
+        groupeActuel = groupe;
+        displayGroupeName();
+        await loadAllData();
+        await initMatchForm();
+        await initTeamBalancer();
+        await initPlayerManagement();
+    });
 }
 
 // ==================== TABS ====================
@@ -181,6 +234,130 @@ async function initMatchForm() {
     
     equipe1Container.innerHTML = joueursHTML;
     equipe2Container.innerHTML = joueursHTML.replace(/data-equipe="1"/g, 'data-equipe="2"');
+    
+    // Écouter les changements de scores pour afficher section buteurs
+    const score1Input = document.getElementById('equipe1-score');
+    const score2Input = document.getElementById('equipe2-score');
+    
+    if (score1Input && score2Input) {
+        score1Input.addEventListener('input', updateButeursSection);
+        score2Input.addEventListener('input', updateButeursSection);
+    }
+    
+    // Écouter les changements de sélection de joueurs pour mettre à jour les buteurs
+    const allCheckboxes = document.querySelectorAll('#equipe1-joueurs input[type="checkbox"], #equipe2-joueurs input[type="checkbox"]');
+    allCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateButeursSection);
+    });
+}
+
+// ==================== COLLECTE DES DONNÉES BUTEURS ====================
+function collectButeursData(equipeIds, equipeNum) {
+    const buteurs = [];
+    
+    equipeIds.forEach(joueurId => {
+        const butsInput = document.getElementById(`buts-${joueurId}`);
+        const cscCheckbox = document.getElementById(`csc-${joueurId}`);
+        
+        if (butsInput && butsInput.dataset.equipe == equipeNum) {
+            const buts = parseInt(butsInput.value) || 0;
+            const csc = cscCheckbox ? cscCheckbox.checked : false;
+            
+            if (buts > 0) {
+                const joueur = joueurs.find(j => j.id === joueurId);
+                buteurs.push({
+                    joueurId: joueurId,
+                    buts: buts,
+                    csc: csc,
+                    position: joueur ? joueur.positionPrincipale : 'Milieu'
+                });
+            }
+        }
+    });
+    
+    return buteurs;
+}
+
+// ==================== SECTION BUTEURS ====================
+function updateButeursSection() {
+    const score1 = parseInt(document.getElementById('equipe1-score').value) || 0;
+    const score2 = parseInt(document.getElementById('equipe2-score').value) || 0;
+    const buteursSection = document.getElementById('buteurs-section');
+    
+    if (!buteursSection) return;
+    
+    // Afficher la section si au moins un but a été marqué
+    if (score1 > 0 || score2 > 0) {
+        buteursSection.style.display = 'block';
+        updateButeursList(1, score1);
+        updateButeursList(2, score2);
+    } else {
+        buteursSection.style.display = 'none';
+    }
+}
+
+function updateButeursList(equipeNum, score) {
+    const equipeChecks = document.querySelectorAll(`#equipe${equipeNum}-joueurs input[type="checkbox"]:checked`);
+    const buteursContainer = document.getElementById(`buteurs-equipe${equipeNum}`);
+    
+    if (!buteursContainer) return;
+    
+    if (equipeChecks.length === 0) {
+        buteursContainer.innerHTML = `
+            <div style="padding: 1.5rem; text-align: center; background: var(--bg-secondary); border-radius: 8px; border: 2px dashed var(--text-light); opacity: 0.6;">
+                <p style="color: var(--text-light); margin: 0;">⬆️ Coche les joueurs de l'Équipe ${equipeNum} ci-dessus</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const joueursEquipe = Array.from(equipeChecks).map(cb => {
+        const joueur = joueurs.find(j => j.id === cb.value);
+        return joueur;
+    }).filter(j => j);
+    
+    let html = '<div class="buteurs-instructions">';
+    html += `<div style="background: var(--success-bg); color: var(--success-color); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-weight: 600;">`;
+    html += `⚽ ${score} but(s) à répartir entre les joueurs`;
+    html += `</div>`;
+    html += '</div>';
+    
+    html += '<div class="buteurs-inputs">';
+    joueursEquipe.forEach(joueur => {
+        html += `
+            <div class="buteur-input-group">
+                <label>
+                    <span class="joueur-name">${joueur.nom}</span>
+                    <span class="joueur-position">${joueur.positionPrincipale}</span>
+                </label>
+                <div class="buteur-controls">
+                    <input 
+                        type="number" 
+                        id="buts-${joueur.id}" 
+                        min="0" 
+                        max="${score}" 
+                        value="0" 
+                        class="buts-input"
+                        data-equipe="${equipeNum}"
+                    >
+                    <label class="csc-checkbox">
+                        <input 
+                            type="checkbox" 
+                            id="csc-${joueur.id}" 
+                            class="csc-checkbox-input"
+                            data-equipe="${equipeNum}"
+                        >
+                        <span>CSC</span>
+                    </label>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    html += '<p class="buteurs-hint">💡 Laisse 0 si le joueur n\'a pas marqué. Coche CSC pour un contre son camp.</p>';
+    
+    buteursContainer.innerHTML = html;
 }
 
 async function handleMatchSubmit(e) {
@@ -213,8 +390,28 @@ async function handleMatchSubmit(e) {
         const equipe1 = joueurs.filter(j => equipe1Ids.includes(j.id));
         const equipe2 = joueurs.filter(j => equipe2Ids.includes(j.id));
         
-        // Calculer les changements de rating
-        const changements = calculerChangementsMatch(equipe1, equipe2, score1, score2);
+        // ===== RÉCUPÉRER LES DONNÉES DES BUTEURS =====
+        const buteurs1 = collectButeursData(equipe1Ids, 1);
+        const buteurs2 = collectButeursData(equipe2Ids, 2);
+        
+        // Valider que le total des buts correspond aux scores
+        const totalButs1 = buteurs1.reduce((sum, b) => sum + (b.csc ? 0 : b.buts), 0);
+        const totalButs2 = buteurs2.reduce((sum, b) => sum + (b.csc ? 0 : b.buts), 0);
+        const totalCSC1 = buteurs1.reduce((sum, b) => sum + (b.csc ? b.buts : 0), 0);
+        const totalCSC2 = buteurs2.reduce((sum, b) => sum + (b.csc ? b.buts : 0), 0);
+        
+        // Les buts de l'équipe 1 = buts marqués par équipe 1 + CSC de équipe 2
+        // Les buts de l'équipe 2 = buts marqués par équipe 2 + CSC de équipe 1
+        const butsReel1 = totalButs1 + totalCSC2;
+        const butsReel2 = totalButs2 + totalCSC1;
+        
+        if (butsReel1 !== score1 || butsReel2 !== score2) {
+            console.warn(`Attention: Total buts ne correspond pas. Équipe1: ${butsReel1}/${score1}, Équipe2: ${butsReel2}/${score2}`);
+            // On continue quand même (les buteurs sont optionnels)
+        }
+        
+        // Calculer les changements de rating AVEC les buteurs
+        const changements = calculerChangementsMatch(equipe1, equipe2, score1, score2, buteurs1, buteurs2);
         
         // Déterminer le résultat
         let resultat1, resultat2;
@@ -240,11 +437,13 @@ async function handleMatchSubmit(e) {
             date: date,
             equipe1: {
                 joueurs: equipe1Ids,
-                score: score1
+                score: score1,
+                buteurs: buteurs1.length > 0 ? buteurs1 : null // Ajouter les buteurs
             },
             equipe2: {
                 joueurs: equipe2Ids,
-                score: score2
+                score: score2,
+                buteurs: buteurs2.length > 0 ? buteurs2 : null // Ajouter les buteurs
             },
             ratingChanges: changements,
             timestamp: new Date().toISOString()
@@ -259,12 +458,42 @@ async function handleMatchSubmit(e) {
             const joueur = joueurs.find(j => j.id === joueurId);
             if (joueur) {
                 const equipe = equipe1Ids.includes(joueurId) ? resultat1 : resultat2;
+                const butsEncaisses = equipe1Ids.includes(joueurId) ? score2 : score1;
+                
+                // Stats de base
                 joueur.impactRating = changements[joueurId].nouveau;
                 joueur.matchsJoues = (joueur.matchsJoues || 0) + 1;
                 
                 if (equipe === 'victoire') joueur.victoires = (joueur.victoires || 0) + 1;
                 else if (equipe === 'nul') joueur.nuls = (joueur.nuls || 0) + 1;
                 else joueur.defaites = (joueur.defaites || 0) + 1;
+                
+                // ===== NOUVELLES STATS DE BUTS =====
+                // Initialiser si n'existent pas
+                joueur.butsMarques = joueur.butsMarques || 0;
+                joueur.butsContresonCamp = joueur.butsContresonCamp || 0;
+                joueur.cleanSheets = joueur.cleanSheets || 0;
+                
+                // Trouver les buts de ce joueur
+                const tousButeurs = [...buteurs1, ...buteurs2];
+                const buteurData = tousButeurs.find(b => b.joueurId === joueurId);
+                
+                if (buteurData) {
+                    if (buteurData.csc) {
+                        // Contre son camp
+                        joueur.butsContresonCamp += buteurData.buts;
+                    } else {
+                        // Buts normaux
+                        joueur.butsMarques += buteurData.buts;
+                    }
+                }
+                
+                // Clean sheet (0-1 but encaissé pour défenseurs/milieux)
+                if (butsEncaisses <= 1 && equipe !== 'defaite') {
+                    if (joueur.positionPrincipale === 'Défenseur' || joueur.positionPrincipale === 'Milieu') {
+                        joueur.cleanSheets += 1;
+                    }
+                }
                 
                 await updateDoc(doc(db, joueursCollectionPath, joueurId), joueur);
             }
@@ -406,7 +635,13 @@ async function displayPlayersList() {
 
 // Fonction globale pour supprimer un joueur
 window.deletePlayer = async function(joueurId) {
-    if (!confirm('Es-tu sûr de vouloir supprimer ce joueur ?')) return;
+    const confirmDelete = await showConfirmModal(
+        'Supprimer ce joueur ?',
+        'Cette action est irréversible. Toutes les statistiques du joueur seront perdues.',
+        '🗑️'
+    );
+    
+    if (!confirmDelete) return;
     
     try {
         const joueursCollectionPath = `${COLLECTIONS.GROUPES}/${groupeActuel.id}/${COLLECTIONS.JOUEURS}`;

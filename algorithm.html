@@ -27,163 +27,166 @@
 
     <main class="container">
         <section class="hero">
+            <div id="groupe-badge" class="groupe-badge" style="display: none;">
+                <span id="groupe-name">Chargement...</span>
+                <button id="change-groupe-btn" class="change-groupe-btn" title="Changer de groupe">
+                    🔄
+                </button>
+            </div>
             <h1>Comment fonctionne l'Impact Rating ?</h1>
-            <p class="subtitle">Transparence totale sur nos algorithmes</p>
+            <p class="subtitle">Un système équilibré qui valorise le jeu collectif et les performances individuelles</p>
         </section>
 
         <div class="algorithm-content">
             <section class="algo-section">
-                <h2>📊 1. Impact Rating de Base</h2>
+                <h2>⚖️ Vue d'Ensemble</h2>
+                <div class="algo-card">
+                    <p>Ton <strong>Impact Rating</strong> évolue après chaque match en fonction de plusieurs facteurs :</p>
+                    <ul class="big-list">
+                        <li><strong>Résultat collectif</strong> - Le résultat de ton équipe (victoire/nul/défaite)</li>
+                        <li><strong>Contribution offensive</strong> - Tes buts marqués par rapport au total de l'équipe</li>
+                        <li><strong>Contribution défensive</strong> - La solidité défensive de l'équipe selon ta position</li>
+                        <li><strong>Contexte du match</strong> - Match serré ou large victoire/défaite</li>
+                    </ul>
+                    <p class="note">💡 Le résultat d'équipe reste <strong>l'élément principal</strong>, mais tes performances individuelles comptent aussi !</p>
+                </div>
+            </section>
+
+            <section class="algo-section">
+                <h2>📊 1. Rating de Base</h2>
                 <div class="algo-card">
                     <h3>Principe</h3>
-                    <p>Chaque joueur commence avec un rating de <strong>1000 points</strong> (comme au système ELO des échecs).</p>
-                    
-                    <h3>Calcul après chaque match</h3>
-                    <div class="formula">
-                        <code>Points gagnés/perdus = K × (Résultat - Probabilité de victoire)</code>
-                    </div>
-                    
-                    <h4>Détails :</h4>
+                    <p>Chaque joueur commence avec un rating de départ identique.</p>
+                    <p>Après chaque match, ton rating évolue en fonction du <strong>résultat de ton équipe</strong> et de la <strong>force de l'adversaire</strong>.</p>
+
+                    <h3>Comment ça marche ?</h3>
                     <ul>
-                        <li><strong>K = 32</strong> : Facteur de changement (permet une évolution progressive)</li>
-                        <li><strong>Résultat</strong> : 1 (victoire), 0.5 (nul), 0 (défaite)</li>
-                        <li><strong>Probabilité</strong> : Calculée selon la différence de rating moyen entre les 2 équipes</li>
+                        <li>✅ <strong>Gagner</strong> contre une équipe forte → tu gagnes beaucoup de points</li>
+                        <li>✅ <strong>Gagner</strong> contre une équipe faible → tu gagnes peu de points</li>
+                        <li>❌ <strong>Perdre</strong> contre une équipe forte → tu perds peu de points</li>
+                        <li>❌ <strong>Perdre</strong> contre une équipe faible → tu perds beaucoup de points</li>
                     </ul>
 
-                    <h3>Exemple concret</h3>
+                    <h3>Score Différentiel</h3>
+                    <p>Une <strong>large victoire</strong> rapporte plus de points qu'une <strong>victoire serrée</strong>.</p>
+                    <p>De même, une large défaite fait perdre plus de points qu'une défaite courte.</p>
+
                     <div class="example">
-                        <p><strong>Équipe 1</strong> (rating moyen: 1020) vs <strong>Équipe 2</strong> (rating moyen: 980)</p>
-                        <p>Équipe 1 gagne 7-5</p>
-                        <p>→ Équipe 1 était favorite : <strong>+8 points</strong> par joueur</p>
-                        <p>→ Équipe 2 était outsider : <strong>-8 points</strong> par joueur</p>
+                        <p><strong>Exemple :</strong> Ton équipe (rating élevé) bat une équipe plus faible</p>
+                        <p>→ Victoire attendue : tu gagnes quelques points</p>
+                        <br>
+                        <p><strong>Exemple 2 :</strong> Ton équipe (rating faible) bat une équipe forte</p>
+                        <p>→ Exploit ! Tu gagnes beaucoup de points 🔥</p>
                     </div>
                 </div>
             </section>
 
             <section class="algo-section">
-                <h2>⚖️ 2. Score Différentiel</h2>
+                <h2>⚽ 2. Contribution Offensive</h2>
                 <div class="algo-card">
                     <h3>Principe</h3>
-                    <p>Une large victoire rapporte plus de points qu'une victoire serrée.</p>
-                    
-                    <div class="formula">
-                        <code>Multiplicateur = 1 + (|Score1 - Score2| / 10)</code>
-                    </div>
+                    <p>Si tu marques des buts, tu gagnes un <strong>bonus</strong> en plus du résultat collectif.</p>
+                    <p><strong>Important :</strong> Ce qui compte, c'est ton <strong>impact relatif</strong> dans le match.</p>
 
-                    <h3>Exemples</h3>
+                    <h3>Impact Relatif</h3>
+                    <p>Le système évalue ta contribution par rapport au total de buts de ton équipe :</p>
                     <ul>
-                        <li>Victoire <strong>5-4</strong> : multiplicateur de <strong>1.1×</strong></li>
-                        <li>Victoire <strong>7-3</strong> : multiplicateur de <strong>1.4×</strong></li>
-                        <li>Victoire <strong>10-2</strong> : multiplicateur de <strong>1.8×</strong></li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="algo-section">
-                <h2>🤝 3. Synergies entre Joueurs</h2>
-                <div class="algo-card">
-                    <h3>Principe</h3>
-                    <p>Pour chaque <strong>paire de joueurs</strong> dans la même équipe, on calcule une synergie.</p>
-                    
-                    <h3>Calcul</h3>
-                    <ul>
-                        <li>Équipe gagne : <strong>+1 point</strong> de synergie</li>
-                        <li>Match nul : <strong>0 point</strong></li>
-                        <li>Équipe perd : <strong>-1 point</strong> de synergie</li>
+                        <li>Marquer <strong>une grande partie des buts</strong> de l'équipe → Énorme contribution ! 🔥</li>
+                        <li>Marquer <strong>plusieurs buts</strong> parmi beaucoup → Bonne contribution ✅</li>
+                        <li>Marquer <strong>peu de buts</strong> parmi beaucoup → Contribution modeste</li>
                     </ul>
 
-                    <h3>Exemple</h3>
+                    <h3>Valorisation selon Position</h3>
+                    <ul>
+                        <li><strong>Attaquant</strong> marque → valorisation normale (c'est ton rôle)</li>
+                        <li><strong>Milieu</strong> marque → valorisation légèrement augmentée</li>
+                        <li><strong>Défenseur</strong> marque → forte valorisation ! (c'est rare et important)</li>
+                    </ul>
+
                     <div class="example">
-                        <p><strong>Pierre & Paul</strong> ont joué ensemble 10 fois :</p>
-                        <p>7 victoires, 1 nul, 2 défaites → Synergie = <strong>+5</strong></p>
-                        <p>✅ Ils forment un bon duo !</p>
+                        <p><strong>Exemple :</strong> Marquer la majorité des buts de ton équipe dans une victoire</p>
+                        <p>→ Tu es l'homme du match → Gros bonus !</p>
+                        <br>
+                        <p><strong>Exemple 2 :</strong> Un défenseur qui marque même un seul but décisif</p>
+                        <p>→ Performance exceptionnelle → Bonus significatif</p>
                     </div>
                 </div>
             </section>
 
             <section class="algo-section">
-                <h2>👥 4. Détection de Trios & Groupes</h2>
+                <h2>🛡️ 3. Contribution Défensive</h2>
                 <div class="algo-card">
                     <h3>Principe</h3>
-                    <p>On détecte les groupes de 3+ joueurs qui jouent bien ensemble.</p>
-                    
-                    <h3>Algorithme</h3>
-                    <ol>
-                        <li>Pour chaque combinaison de 3 joueurs, calculer la synergie moyenne de toutes les paires</li>
-                        <li>Si cette moyenne dépasse <strong>+3</strong>, c'est un trio gagnant</li>
-                        <li>Même principe pour les quartets (4 joueurs)</li>
-                    </ol>
+                    <p>La solidité défensive de ton équipe affecte aussi ton rating, surtout si tu es défenseur.</p>
+                    <p><strong>Important :</strong> C'est <strong>relatif au match</strong> et à ton rôle.</p>
 
-                    <h3>Exemple</h3>
+                    <h3>Évaluation Contextuelle</h3>
+                    <p>Le système évalue la défense en fonction du contexte du match :</p>
+                    <ul>
+                        <li>Ton équipe gagne <strong>avec un gros score</strong> → Encaisser quelques buts est acceptable (l'attaque compense)</li>
+                        <li>Ton équipe perd <strong>avec peu de buts</strong> → Même peu de buts encaissés c'est problématique</li>
+                        <li><strong>Clean sheet</strong> (très peu de buts) → Bonus important, surtout pour les défenseurs ! 🛡️</li>
+                    </ul>
+
+                    <h3>Impact selon Position</h3>
+                    <ul>
+                        <li><strong>Défenseur</strong> → Très concerné par la solidité défensive</li>
+                        <li><strong>Milieu</strong> → Partiellement concerné</li>
+                        <li><strong>Attaquant</strong> → Peu concerné par la défense</li>
+                    </ul>
+
+                    <h3>Contre Son Camp (CSC)</h3>
+                    <p>Marquer contre ton camp → Malus important (c'est grave, quel que soit le contexte)</p>
+
                     <div class="example">
-                        <p><strong>Trio : Ruben-Pierre-Paul</strong></p>
-                        <ul>
-                            <li>Ruben ↔ Pierre : +6</li>
-                            <li>Pierre ↔ Paul : +5</li>
-                            <li>Paul ↔ Ruben : +7</li>
-                        </ul>
-                        <p>Moyenne = <strong>+6</strong> ✅ Excellent trio !</p>
+                        <p><strong>Exemple :</strong> Défenseur dans une large victoire avec peu de buts encaissés</p>
+                        <p>→ Excellente performance défensive → Bonus significatif</p>
+                        <br>
+                        <p><strong>Exemple 2 :</strong> Défaite avec beaucoup de buts encaissés</p>
+                        <p>→ Défense fragile → Malus (surtout pour les défenseurs)</p>
                     </div>
                 </div>
             </section>
 
             <section class="algo-section">
-                <h2>📍 5. Positionnement</h2>
+                <h2>🤝 4. Synergies entre Joueurs</h2>
                 <div class="algo-card">
                     <h3>Principe</h3>
-                    <p>Le rating est indépendant pour chaque position (Défenseur, Milieu, Attaquant).</p>
-                    
-                    <h3>Pourquoi ?</h3>
-                    <ul>
-                        <li>Un excellent défenseur n'est pas comparable à un excellent attaquant</li>
-                        <li>Évite de pénaliser certains rôles</li>
-                        <li>Permet un équilibrage plus fin des équipes</li>
-                    </ul>
-                </div>
-            </section>
+                    <p>Le système détecte automatiquement quels joueurs <strong>jouent bien ensemble</strong>.</p>
 
-            <section class="algo-section">
-                <h2>📈 6. Facteur Présence (Confiance Statistique)</h2>
-                <div class="algo-card">
-                    <h3>Principe</h3>
-                    <p>Plus un joueur joue de matchs, plus son rating est <strong>fiable</strong>.</p>
-                    
-                    <div class="formula">
-                        <code>Confiance = min(100%, matchsJoués × 10%)</code>
+                    <h3>Comment ?</h3>
+                    <p>Pour chaque paire de joueurs qui ont joué ensemble :</p>
+                    <ul>
+                        <li>Victoire ensemble → <strong>+1 point</strong> de synergie</li>
+                        <li>Match nul → <strong>0 point</strong></li>
+                        <li>Défaite ensemble → <strong>-1 point</strong></li>
+                    </ul>
+
+                    <h3>Trios et Quartets</h3>
+                    <p>Le système identifie aussi les groupes de 3-4 joueurs qui forment des combos gagnantes !</p>
+
+                    <div class="example">
+                        <p><strong>Ruben & Marc</strong> ont joué 8 fois ensemble :</p>
+                        <p>6 victoires, 1 nul, 1 défaite → Synergie = <strong>+5</strong></p>
+                        <p>✅ Ils forment un excellent duo !</p>
                     </div>
-
-                    <h3>Exemples</h3>
-                    <ul>
-                        <li>3 matchs → Confiance de <strong>30%</strong></li>
-                        <li>7 matchs → Confiance de <strong>70%</strong></li>
-                        <li>10+ matchs → Confiance de <strong>100%</strong></li>
-                    </ul>
-
-                    <p class="note">💡 Cela n'impacte PAS le rating, c'est juste un indicateur visuel de fiabilité.</p>
                 </div>
             </section>
 
             <section class="algo-section">
-                <h2>⚖️ 7. Algorithme d'Équilibrage</h2>
+                <h2>⚖️ 5. Créer des Équipes Équilibrées</h2>
                 <div class="algo-card">
-                    <h3>Objectif</h3>
-                    <p>Créer 2 équipes aussi équilibrées que possible.</p>
-                    
-                    <h3>Contraintes</h3>
-                    <ol>
+                    <h3>Comment l'algo crée les équipes ?</h3>
+                    <p>Quand tu utilises le <strong>générateur d'équipes</strong> (Admin), l'algorithme teste des milliers de combinaisons pour trouver les plus équilibrées.</p>
+
+                    <h3>Critères d'équilibrage</h3>
+                    <ul>
                         <li><strong>Rating moyen</strong> similaire entre les 2 équipes</li>
-                        <li><strong>Positions</strong> équilibrées (même nombre de défenseurs, milieux, attaquants)</li>
+                        <li><strong>Positions</strong> équilibrées (défenseurs, milieux, attaquants)</li>
                         <li><strong>Synergies</strong> réparties équitablement</li>
-                    </ol>
+                    </ul>
 
-                    <h3>Méthode</h3>
-                    <p>L'algorithme teste des milliers de combinaisons et sélectionne les 3 meilleures selon un score composite :</p>
-                    
-                    <div class="formula">
-                        <code>Score = |RatingÉquipe1 - RatingÉquipe2| + |SynergieÉquipe1 - SynergieÉquipe2|</code>
-                    </div>
-                    
-                    <p>Plus le score est <strong>bas</strong>, plus les équipes sont équilibrées.</p>
+                    <p class="note">💡 L'objectif : des matchs serrés et excitants, pas des écrasements !</p>
                 </div>
             </section>
 
@@ -191,24 +194,54 @@
                 <h2>❓ Questions Fréquentes</h2>
                 <div class="algo-card">
                     <div class="faq-item">
-                        <h4>Pourquoi je perds des points même quand mon équipe gagne ?</h4>
-                        <p>Si ton équipe était très favorite (rating moyen beaucoup plus élevé), la victoire rapporte peu de points. C'est normal, c'était attendu !</p>
+                        <h4>Pourquoi je gagne peu de points alors que mon équipe a gagné ?</h4>
+                        <p>Si ton équipe était <strong>favorite</strong> (rating plus élevé), une victoire était attendue et rapporte peu de points. C'est normal !</p>
+                        <p>Par contre, battre une équipe plus forte rapporte beaucoup de points 🔥</p>
                     </div>
 
                     <div class="faq-item">
-                        <h4>Est-ce que les buts comptent individuellement ?</h4>
-                        <p>Non, pour l'instant seul le résultat final compte. Les stats individuelles (buts, passes) pourront être ajoutées plus tard.</p>
+                        <h4>Est-ce que marquer des buts compte ?</h4>
+                        <p>Oui ! Marquer des buts te donne un <strong>bonus</strong> en plus du résultat collectif.</p>
+                        <p>Mais attention : l'essentiel reste la <strong>victoire d'équipe</strong> qui compte beaucoup plus 💪</p>
                     </div>
 
                     <div class="faq-item">
                         <h4>Comment améliorer mon rating ?</h4>
-                        <p>Joue régulièrement, gagne des matchs (surtout contre des équipes fortes), et développe des synergies avec d'autres joueurs !</p>
+                        <ul>
+                            <li>✅ <strong>Gagner des matchs</strong> (surtout contre des équipes fortes)</li>
+                            <li>✅ <strong>Marquer des buts</strong> (surtout si tu es défenseur/milieu)</li>
+                            <li>✅ <strong>Défendre bien</strong> (éviter d'encaisser trop de buts)</li>
+                            <li>✅ <strong>Jouer régulièrement</strong> pour stabiliser ton rating</li>
+                        </ul>
                     </div>
 
                     <div class="faq-item">
-                        <h4>Les nouveaux joueurs sont-ils désavantagés ?</h4>
-                        <p>Non, ils commencent à 1000 comme tout le monde. L'indicateur de "confiance" montre juste qu'il faut quelques matchs pour stabiliser leur rating.</p>
+                        <h4>C'est quoi l'indicateur de "Présence" ?</h4>
+                        <p>C'est un indicateur de <strong>fiabilité</strong> de ton rating.</p>
+                        <p>Plus tu joues de matchs, plus ton rating est représentatif de ton vrai niveau. Après plusieurs matchs, ton rating devient stable !</p>
                     </div>
+
+                    <div class="faq-item">
+                        <h4>Les nouveaux joueurs sont désavantagés ?</h4>
+                        <p>Non ! Tout le monde commence avec le <strong>même rating de départ</strong>. Après quelques matchs, ton rating reflètera ton vrai niveau.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="algo-section summary-section">
+                <h2>🎯 En Résumé</h2>
+                <div class="algo-card">
+                    <p class="big-text">Ton <strong>Impact Rating</strong> combine plusieurs éléments :</p>
+                    <ul class="summary-list">
+                        <li><strong>Résultat collectif</strong> - L'élément principal et le plus important</li>
+                        <li><strong>Contribution offensive</strong> - Tes buts marqués (relatif au match)</li>
+                        <li><strong>Contribution défensive</strong> - Solidité de l'équipe selon ta position</li>
+                        <li><strong>Contexte du match</strong> - Large victoire/défaite ou match serré</li>
+                    </ul>
+                    <p class="highlight">💡 L'esprit d'équipe avant tout, mais tes performances individuelles comptent aussi !</p>
+                    <p style="text-align: center; margin-top: 1.5rem; color: var(--text-light); font-style: italic;">
+                        L'algorithme est ajusté régulièrement pour rester équilibré et juste pour tous les rôles.
+                    </p>
                 </div>
             </section>
         </div>
@@ -219,6 +252,8 @@
             <p>&copy; 2026 Impact Rating - Fait avec ⚽ par Ruben</p>
         </div>
     </footer>
+
+    <script type="module" src="js/algorithm.js"></script>
 </body>
 </html>
 

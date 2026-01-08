@@ -130,6 +130,60 @@
     margin: 0;
 }
 
+/* ==================== NEW STYLES (SIMPLIFIED PAGE) ==================== */
+.big-list {
+    list-style: none;
+    padding: 0;
+}
+
+.big-list li {
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.75rem;
+    background: rgba(46, 204, 113, 0.05);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 6px;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+.summary-list {
+    list-style: none;
+    padding: 0;
+}
+
+.summary-list li {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0.5rem;
+    background: rgba(52, 152, 219, 0.05);
+    border-left: 4px solid var(--accent-color);
+    border-radius: 6px;
+    font-size: 1.1rem;
+}
+
+.big-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.highlight {
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(52, 152, 219, 0.1));
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.summary-section .algo-card {
+    background: linear-gradient(135deg, var(--card-bg), rgba(46, 204, 113, 0.05));
+    border: 2px solid var(--primary-color);
+}
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
     .algorithm-content {
@@ -147,6 +201,17 @@
     .formula code {
         font-size: 0.95rem;
         word-break: break-word;
+    }
+    
+    .big-list li,
+    .summary-list li {
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .big-text,
+    .highlight {
+        font-size: 1rem;
     }
 }
 

@@ -55,7 +55,15 @@
         <!-- Zone admin (cachée par défaut) -->
         <section id="admin-section" class="hidden">
             <div class="admin-header">
-                <h1>Panneau d'Administration</h1>
+                <div>
+                    <h1>Panneau d'Administration</h1>
+                    <div id="groupe-badge-admin" class="groupe-badge-admin" style="display: none; margin-top: 0.5rem;">
+                        <span id="groupe-name-admin">Chargement...</span>
+                        <button id="change-groupe-btn-admin" class="change-groupe-btn-admin" title="Changer de groupe">
+                            🔄
+                        </button>
+                    </div>
+                </div>
                 <button id="logout-btn" class="btn btn-secondary">Déconnexion</button>
             </div>
 
@@ -108,7 +116,31 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-large">
+                    <!-- Section Buteurs -->
+                    <div id="buteurs-section" class="buteurs-section" style="display: none; margin-top: 2rem;">
+                        <h3>⚽ Qui a marqué les buts ?</h3>
+                        <p class="subtitle">Indique les buteurs de chaque équipe (optionnel)</p>
+                        
+                        <div class="equipes-container">
+                            <!-- Buteurs Équipe 1 -->
+                            <div class="equipe-section">
+                                <h4>Buteurs Équipe 1</h4>
+                                <div id="buteurs-equipe1" class="buteurs-list">
+                                    <!-- Rempli dynamiquement -->
+                                </div>
+                            </div>
+
+                            <!-- Buteurs Équipe 2 -->
+                            <div class="equipe-section">
+                                <h4>Buteurs Équipe 2</h4>
+                                <div id="buteurs-equipe2" class="buteurs-list">
+                                    <!-- Rempli dynamiquement -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large" style="margin-top: 2rem;">
                         💾 Enregistrer le match
                     </button>
 

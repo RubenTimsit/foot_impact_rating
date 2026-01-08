@@ -2,7 +2,9 @@
 
 import { db, collection, getDocs, query, where, COLLECTIONS } from './firebase-config.js';
 import { detecterTrios, detecterQuartets, getTopSynergies, genererMatriceSynergies } from './synergy-system.js';
-import { checkAndShowModal } from './code-modal.js';
+import { checkAndShowModal, showCodeModal } from './code-modal.js';
+import { clearCodeGroupe } from './groupe-manager.js';
+import { showConfirmModal } from './confirm-modal.js';
 
 let joueurs = [];
 let synergies = {};
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Vérifier le code de groupe et afficher le modal si nécessaire
     groupeActuel = await checkAndShowModal(async (groupe) => {
         groupeActuel = groupe;
+        displayGroupeName();
         await loadData();
         displayGroupes();
         displayMatrix();
@@ -23,10 +26,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Si le groupe existe déjà
     if (groupeActuel) {
+        displayGroupeName();
         await loadData();
         displayGroupes();
         displayMatrix();
         displayTopSynergies();
+    }
+    
+    // Bouton changer de groupe
+    const changeGroupeBtn = document.getElementById('change-groupe-btn');
+    if (changeGroupeBtn) {
+        changeGroupeBtn.addEventListener('click', handleChangeGroupe);
     }
 });
 
@@ -67,6 +77,47 @@ function loadDemoData() {
     joueurs = [];
     synergies = {};
     console.log('📝 Aucune donnée dans Firebase, démarrage avec une base vide');
+}
+
+// ==================== AFFICHAGE DU NOM DU GROUPE ====================
+function displayGroupeName() {
+    const groupeBadge = document.getElementById('groupe-badge');
+    const groupeName = document.getElementById('groupe-name');
+    
+    if (groupeActuel && groupeBadge && groupeName) {
+        groupeName.textContent = groupeActuel.nomGroupe;
+        groupeBadge.style.display = 'inline-flex';
+    }
+}
+
+// ==================== CHANGEMENT DE GROUPE ====================
+async function handleChangeGroupe() {
+    const confirmChange = await showConfirmModal(
+        'Voulez-vous changer de groupe ?',
+        'Vous allez être déconnecté du groupe actuel et vous devrez entrer un nouveau code.'
+    );
+    
+    if (!confirmChange) return;
+    
+    clearCodeGroupe();
+    console.log('🔄 Changement de groupe - localStorage effacé');
+    
+    joueurs = [];
+    synergies = {};
+    groupeActuel = null;
+    
+    const groupeBadge = document.getElementById('groupe-badge');
+    if (groupeBadge) groupeBadge.style.display = 'none';
+    
+    groupeActuel = await showCodeModal(async (groupe) => {
+        console.log('✅ Nouveau groupe sélectionné:', groupe);
+        groupeActuel = groupe;
+        displayGroupeName();
+        await loadData();
+        displayGroupes();
+        displayMatrix();
+        displayTopSynergies();
+    });
 }
 
 // ==================== AFFICHAGE DES GROUPES ====================
