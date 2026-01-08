@@ -130,6 +130,22 @@ function setupForm() {
     
     // Soumission du formulaire
     inscriptionForm?.addEventListener('submit', handleInscription);
+    
+    // Afficher/masquer le champ de profil selon la position
+    const positionSelect = document.getElementById('position');
+    const profilGroup = document.getElementById('profil-milieu-group');
+    const profilSelect = document.getElementById('profil-milieu');
+    
+    positionSelect?.addEventListener('change', () => {
+        if (positionSelect.value === 'Milieu') {
+            profilGroup.style.display = 'block';
+            profilSelect.required = true;
+        } else {
+            profilGroup.style.display = 'none';
+            profilSelect.required = false;
+            profilSelect.value = '';
+        }
+    });
 }
 
 // ==================== VÉRIFIER LE CODE DE GROUPE ====================
@@ -257,6 +273,7 @@ async function handleInscription(e) {
         // Récupérer les valeurs
         const nom = document.getElementById('nom').value.trim();
         const position = document.getElementById('position').value;
+        const profilMilieu = document.getElementById('profil-milieu').value || null;
         const email = document.getElementById('email').value.trim();
         const disponible = document.getElementById('disponible').checked;
         
@@ -269,6 +286,10 @@ async function handleInscription(e) {
             throw new Error('Choisis une position');
         }
         
+        if (position === 'Milieu' && !profilMilieu) {
+            throw new Error('Choisis un profil pour le milieu de terrain');
+        }
+        
         // Vérifier une dernière fois que le nom n'existe pas
         const nomNormalized = nom.toLowerCase();
         const exists = joueurs.some(j => j.nom.toLowerCase() === nomNormalized);
@@ -278,7 +299,7 @@ async function handleInscription(e) {
         }
         
         // Créer le joueur
-        const nouveauJoueur = creerNouveauJoueur(nom, position);
+        const nouveauJoueur = creerNouveauJoueur(nom, position, profilMilieu);
         
         // Ajouter les infos supplémentaires
         if (email) {

@@ -318,6 +318,15 @@ function showAddPlayerModal() {
                     </select>
                 </div>
                 
+                <div class="form-group" id="profil-milieu-group" style="display: none;">
+                    <label for="player-profil-milieu">Profil de milieu *</label>
+                    <select id="player-profil-milieu">
+                        <option value="">-- Choisis un profil --</option>
+                        <option value="Offensif">⚡ Offensif</option>
+                        <option value="Défensif">🛡️ Défensif</option>
+                    </select>
+                </div>
+                
                 <div class="form-group">
                     <label for="player-email">Email (optionnel)</label>
                     <input 
@@ -350,6 +359,22 @@ function showAddPlayerModal() {
         document.getElementById('player-nom').focus();
     }, 300);
     
+    // Afficher/masquer le champ de profil selon la position
+    const positionSelect = document.getElementById('player-position');
+    const profilGroup = document.getElementById('profil-milieu-group');
+    const profilSelect = document.getElementById('player-profil-milieu');
+    
+    positionSelect.addEventListener('change', () => {
+        if (positionSelect.value === 'Milieu') {
+            profilGroup.style.display = 'block';
+            profilSelect.required = true;
+        } else {
+            profilGroup.style.display = 'none';
+            profilSelect.required = false;
+            profilSelect.value = '';
+        }
+    });
+    
     // Setup du formulaire
     document.getElementById('add-player-form').addEventListener('submit', handleAddPlayer);
 }
@@ -367,6 +392,7 @@ async function handleAddPlayer(e) {
     try {
         const nom = document.getElementById('player-nom').value.trim();
         const position = document.getElementById('player-position').value;
+        const profilMilieu = document.getElementById('player-profil-milieu').value || null;
         const email = document.getElementById('player-email').value.trim();
         
         if (!nom || nom.length < 2) {
@@ -375,6 +401,10 @@ async function handleAddPlayer(e) {
         
         if (!position) {
             throw new Error('Choisis une position');
+        }
+        
+        if (position === 'Milieu' && !profilMilieu) {
+            throw new Error('Choisis un profil pour le milieu de terrain');
         }
         
         // Vérifier que le nom n'existe pas déjà dans ce groupe
@@ -386,7 +416,7 @@ async function handleAddPlayer(e) {
         }
         
         // Créer le joueur
-        const nouveauJoueur = creerNouveauJoueur(nom, position);
+        const nouveauJoueur = creerNouveauJoueur(nom, position, profilMilieu);
         
         // Ajouter les infos supplémentaires
         if (email) {

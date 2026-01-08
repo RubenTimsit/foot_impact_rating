@@ -136,13 +136,26 @@ function calculerContributionOffensive(joueur, buteurData, butsEquipe, resultat)
     
     // ===== MULTIPLICATEUR SELON POSITION =====
     // Un but de défenseur vaut plus qu'un but d'attaquant
-    const multiplicateurPosition = {
-        'Attaquant': 1.0,    // Normal (c'est son rôle)
-        'Milieu': 1.15,      // Légèrement valorisé
-        'Défenseur': 1.4     // Fortement valorisé (rare)
-    };
+    let multPos = 1.0;
     
-    const multPos = multiplicateurPosition[joueur.positionPrincipale] || 1.0;
+    if (joueur.positionPrincipale === 'Attaquant') {
+        multPos = 1.0; // Normal (c'est son rôle)
+    } else if (joueur.positionPrincipale === 'Défenseur') {
+        multPos = 1.4; // Fortement valorisé (rare)
+    } else if (joueur.positionPrincipale === 'Milieu') {
+        // Milieu avec profil spécifique
+        if (joueur.profilMilieu === 'Offensif') {
+            // Milieu offensif = 2/3 attaquant + 1/3 défenseur
+            multPos = (2/3 * 1.0) + (1/3 * 1.4); // ≈ 1.13
+        } else if (joueur.profilMilieu === 'Défensif') {
+            // Milieu défensif = 2/3 défenseur + 1/3 attaquant
+            multPos = (2/3 * 1.4) + (1/3 * 1.0); // ≈ 1.27
+        } else {
+            // Milieu sans profil spécifié (anciens joueurs)
+            multPos = 1.15;
+        }
+    }
+    
     pointsBase *= multPos;
     
     // ===== AJUSTEMENT SELON RÉSULTAT =====
@@ -185,13 +198,25 @@ function calculerContributionDefensive(joueur, butsEncaisses, butsMarques, buteu
     }
     
     // ===== COEFFICIENT SELON POSITION =====
-    const coeffPosition = {
-        'Défenseur': 1.0,    // Pleinement responsable
-        'Milieu': 0.55,      // Partiellement responsable
-        'Attaquant': 0.25    // Peu responsable
-    };
+    let coeff = 0.5;
     
-    const coeff = coeffPosition[joueur.positionPrincipale] || 0.5;
+    if (joueur.positionPrincipale === 'Défenseur') {
+        coeff = 1.0; // Pleinement responsable
+    } else if (joueur.positionPrincipale === 'Attaquant') {
+        coeff = 0.25; // Peu responsable
+    } else if (joueur.positionPrincipale === 'Milieu') {
+        // Milieu avec profil spécifique
+        if (joueur.profilMilieu === 'Défensif') {
+            // Milieu défensif = 2/3 défenseur + 1/3 attaquant
+            coeff = (2/3 * 1.0) + (1/3 * 0.25); // ≈ 0.75
+        } else if (joueur.profilMilieu === 'Offensif') {
+            // Milieu offensif = 2/3 attaquant + 1/3 défenseur
+            coeff = (2/3 * 0.25) + (1/3 * 1.0); // ≈ 0.50
+        } else {
+            // Milieu sans profil spécifié (anciens joueurs)
+            coeff = 0.55;
+        }
+    }
     
     // ===== RATIO OFFENSIF/DÉFENSIF (contextuel) =====
     // Si ton équipe marque 10 et encaisse 3 → défense ok malgré 3 buts
@@ -425,10 +450,11 @@ export function calculerChangementsMatch(equipe1, equipe2, score1, score2, buteu
  * @param {string} position - Position (Défenseur, Milieu, Attaquant)
  * @returns {Object} Objet joueur
  */
-export function creerNouveauJoueur(nom, position) {
+export function creerNouveauJoueur(nom, position, profilMilieu = null) {
     return {
         nom: nom,
         positionPrincipale: position,
+        profilMilieu: profilMilieu, // 'Offensif' ou 'Défensif' (seulement pour Milieu)
         impactRating: BASE_RATING,
         matchsJoues: 0,
         victoires: 0,

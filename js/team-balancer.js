@@ -13,8 +13,11 @@ function calculerRatingMoyen(equipe) {
 
 /**
  * Calcule la répartition des positions dans une équipe
+ * PREND EN COMPTE le profil des milieux (offensif/défensif)
+ * Un milieu offensif compte comme 2/3 attaquant + 1/3 défenseur
+ * Un milieu défensif compte comme 2/3 défenseur + 1/3 attaquant
  * @param {Array} equipe - Joueurs de l'équipe
- * @returns {Object} Nombre de joueurs par position
+ * @returns {Object} Nombre de joueurs par position (valeurs décimales possibles)
  */
 function calculerRepartitionPositions(equipe) {
     const repartition = {
@@ -24,8 +27,24 @@ function calculerRepartitionPositions(equipe) {
     };
     
     equipe.forEach(joueur => {
-        if (repartition.hasOwnProperty(joueur.positionPrincipale)) {
-            repartition[joueur.positionPrincipale]++;
+        if (joueur.positionPrincipale === 'Défenseur') {
+            repartition['Défenseur']++;
+        } else if (joueur.positionPrincipale === 'Attaquant') {
+            repartition['Attaquant']++;
+        } else if (joueur.positionPrincipale === 'Milieu') {
+            // Milieu avec profil spécifique
+            if (joueur.profilMilieu === 'Offensif') {
+                // Milieu offensif = 2/3 attaquant + 1/3 défenseur
+                repartition['Attaquant'] += 2/3;
+                repartition['Défenseur'] += 1/3;
+            } else if (joueur.profilMilieu === 'Défensif') {
+                // Milieu défensif = 2/3 défenseur + 1/3 attaquant
+                repartition['Défenseur'] += 2/3;
+                repartition['Attaquant'] += 1/3;
+            } else {
+                // Milieu sans profil (anciens joueurs) = équilibré
+                repartition['Milieu']++;
+            }
         }
     });
     
