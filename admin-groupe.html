@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Groupe — Impact Rating</title>
+    <link rel="stylesheet" href="css/groupe.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <a href="profil.html" class="nav-logo">⚽ Impact Rating</a>
+            <div class="nav-right">
+                <span id="nav-groupe-nom" class="nav-groupe-nom"></span>
+                <a href="profil.html" class="btn-nav-ghost">← Mon profil</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="page-loader" class="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Chargement du groupe...</p>
+    </div>
+
+    <main id="main-content" class="hidden">
+
+        <div class="page-header">
+            <div class="page-header-inner">
+                <div>
+                    <h1 id="groupe-titre">Mon Groupe</h1>
+                    <p class="page-subtitle">
+                        Code d'invitation : <code id="groupe-code" class="code-badge large"></code>
+                        <button id="btn-copy-code" class="btn-copy" title="Copier le code">📋</button>
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <span id="pending-badge" class="badge badge-warning hidden"></span>
+                    <a id="btn-voir-groupe" href="#" class="btn-sm btn-ghost">👁 Voir le classement</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs-bar">
+            <div class="tabs-inner">
+                <button class="tab active" data-tab="pending">En attente <span id="pending-count-tab" class="tab-count"></span></button>
+                <button class="tab" data-tab="membres">Membres actifs <span id="membres-count-tab" class="tab-count"></span></button>
+                <button class="tab" data-tab="matchs">⚽ Saisir un match</button>
+                <button class="tab" data-tab="parametres">Paramètres</button>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+
+            <!-- TAB: EN ATTENTE -->
+            <div id="tab-pending" class="tab-content active">
+                <div id="pending-list"></div>
+            </div>
+
+            <!-- TAB: MEMBRES ACTIFS -->
+            <div id="tab-membres" class="tab-content hidden">
+                <div class="table-container">
+                    <table class="data-table" id="membres-table">
+                        <thead><tr>
+                            <th>#</th>
+                            <th>Joueur</th>
+                            <th>Position</th>
+                            <th>Impact Rating</th>
+                            <th>Matchs</th>
+                            <th>V-N-D</th>
+                            <th>Actions</th>
+                        </tr></thead>
+                        <tbody id="membres-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: MATCHS -->
+            <div id="tab-matchs" class="tab-content hidden">
+
+                <!-- Section 0: Créer un créneau manuellement -->
+                <div class="creneau-create-card" style="margin-bottom:2rem">
+                    <div class="creneau-create-header" id="toggle-creneau-form">
+                        <div style="display:flex;align-items:center;gap:0.65rem">
+                            <span>📅</span>
+                            <strong>Créer un créneau manuellement</strong>
+                        </div>
+                        <span id="creneau-toggle-icon" class="creneau-toggle-icon">＋</span>
+                    </div>
+                    <div id="creneau-form-wrapper" class="hidden creneau-form-body">
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Date du match</label>
+                                <input type="date" id="creneau-date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Heure</label>
+                                <input type="time" id="creneau-heure" class="form-input" value="18:30">
+                            </div>
+                        </div>
+                        <div class="form-group" style="max-width:220px">
+                            <label class="form-label">Nombre max de joueurs</label>
+                            <input type="number" id="creneau-max" class="form-input" min="4" max="30" value="10">
+                        </div>
+                        <div id="creneau-msg" class="form-msg hidden"></div>
+                        <button id="btn-creer-creneau" class="btn-action btn-primary">🟢 Ouvrir les inscriptions</button>
+                    </div>
+                </div>
+
+                <!-- Section 1: Inscriptions du créneau actif -->
+                <div id="inscriptions-admin-section" style="margin-bottom:2.5rem">
+                    <h3 style="margin-bottom:1rem">Inscriptions — prochain match</h3>
+                    <div id="inscriptions-admin-content">
+                        <div class="loading-td" style="padding:2rem;text-align:center"><div class="loader-spinner small"></div></div>
+                    </div>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- Section 2: Saisir un résultat -->
+                <div style="margin-top:2rem">
+                    <h3 style="margin-bottom:1rem">Saisir un résultat</h3>
+                    <div id="match-form-wrapper">
+                        <div class="match-form-header">
+                            <p class="page-subtitle">Assigne chaque joueur à une équipe, entre le score, puis valide.</p>
+                        </div>
+
+                    <!-- Tableau de sélection des joueurs -->
+                    <div class="table-container" style="margin-bottom:1.5rem">
+                        <table class="data-table">
+                            <thead><tr>
+                                <th>Joueur</th><th>Position</th>
+                                <th class="team-col team-a-col">Équipe A</th>
+                                <th class="team-col team-b-col">Équipe B</th>
+                                <th>Absent</th>
+                            </tr></thead>
+                            <tbody id="match-players-tbody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Score -->
+                    <div class="score-inputs">
+                        <div class="score-team">
+                            <div class="team-label team-a-label">Équipe A</div>
+                            <input type="number" id="score-a" min="0" max="99" value="0" class="score-input">
+                        </div>
+                        <div class="score-sep">—</div>
+                        <div class="score-team">
+                            <div class="team-label team-b-label">Équipe B</div>
+                            <input type="number" id="score-b" min="0" max="99" value="0" class="score-input">
+                        </div>
+                    </div>
+
+                    <div id="match-error" class="form-msg error hidden"></div>
+                    <button id="btn-submit-match" class="btn-action btn-primary btn-full">⚽ Valider le match</button>
+                </div>
+
+                <!-- Résultats après soumission -->
+                <div id="match-results" class="hidden">
+                    <div class="results-header">
+                        <div class="results-score" id="results-score"></div>
+                        <p class="results-subtitle">Changements de rating</p>
+                    </div>
+                    <div class="rating-changes" id="rating-changes"></div>
+                    <button id="btn-nouveau-match" class="btn-action btn-ghost" style="margin-top:1.5rem">← Saisir un autre match</button>
+                </div>
+            </div>
+            </div>
+
+            <!-- TAB: PARAMÈTRES -->
+            <div id="tab-parametres" class="tab-content hidden">
+                <div class="settings-card">
+                    <h3>Paramètres du groupe</h3>
+                    <form id="settings-form">
+                        <div class="form-group">
+                            <label>Nom du groupe</label>
+                            <input type="text" id="s-nom" maxlength="30">
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre max de joueurs par match</label>
+                            <input type="number" id="s-max" min="4" max="30">
+                        </div>
+                        <div id="settings-msg" class="form-msg hidden"></div>
+                        <button type="submit" class="btn-action btn-primary">Enregistrer</button>
+                    </form>
+                </div>
+
+                <!-- CONFIG HEBDO -->
+                <div class="settings-card" style="margin-top:1.5rem">
+                    <h3>Match hebdomadaire récurrent</h3>
+                    <p class="page-subtitle" style="margin-bottom:1.25rem">Active l'ouverture automatique des inscriptions et la création des créneaux chaque semaine.</p>
+
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="config-recurring" class="toggle-checkbox">
+                            <span class="toggle-switch"></span>
+                            <span>Activer le créneau récurrent</span>
+                        </label>
+                    </div>
+
+                    <div id="config-hebdo-fields" class="hidden">
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Jour du match</label>
+                                <select id="config-match-jour" class="form-input">
+                                    <option value="1">Lundi</option>
+                                    <option value="2">Mardi</option>
+                                    <option value="3">Mercredi</option>
+                                    <option value="4">Jeudi</option>
+                                    <option value="5">Vendredi</option>
+                                    <option value="6">Samedi</option>
+                                    <option value="0">Dimanche</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Heure du match</label>
+                                <input type="time" id="config-match-heure" class="form-input" value="18:30">
+                            </div>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Ouverture des inscriptions</label>
+                                <select id="config-insc-jour" class="form-input">
+                                    <option value="1">Lundi</option>
+                                    <option value="2">Mardi</option>
+                                    <option value="3">Mercredi</option>
+                                    <option value="4">Jeudi</option>
+                                    <option value="5">Vendredi</option>
+                                    <option value="6">Samedi</option>
+                                    <option value="0">Dimanche</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Heure d'ouverture</label>
+                                <input type="time" id="config-insc-heure" class="form-input" value="09:00">
+                            </div>
+                        </div>
+
+                        <div id="config-next-ouverture" class="config-next-label hidden"></div>
+                    </div>
+
+                    <div id="config-hebdo-msg" class="form-msg hidden"></div>
+                    <button id="btn-save-hebdo" class="btn-action btn-primary" style="margin-top:1rem">Enregistrer la config hebdo</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL confirmation expulsion -->
+    <div id="modal-expulser" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>Exclure ce joueur ?</h3>
+            <p id="modal-expulser-nom"></p>
+            <div class="modal-btns">
+                <button class="btn-action btn-ghost" id="modal-expulser-cancel">Annuler</button>
+                <button class="btn-action btn-danger" id="modal-expulser-confirm">Exclure</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { requireAuth } from './js/auth.js';
+        import { db, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, addDoc, writeBatch, increment, query, where, COLLECTIONS } from './js/firebase-config.js';
+        import { calculerChangementsMatch } from './js/rating-system.js';
+
+        const params = new URLSearchParams(window.location.search);
+        const groupeId = params.get('id');
+        let groupe = null;
+        let currentUser = null;
+        let membreAExpulser = null;
+
+        async function init() {
+            if (!groupeId) { window.location.href = 'profil.html'; return; }
+
+            currentUser = await requireAuth();
+
+            // Charger le groupe
+            const snap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId));
+            if (!snap.exists() || snap.data().adminId !== currentUser.uid) {
+                window.location.href = 'profil.html';
+                return;
+            }
+            groupe = { id: snap.id, ...snap.data() };
+
+            // Rendre la nav
+            document.getElementById('nav-groupe-nom').textContent = groupe.nom;
+            document.getElementById('groupe-titre').textContent = groupe.nom;
+            document.getElementById('groupe-code').textContent = groupe.code;
+            document.getElementById('btn-voir-groupe').href = `groupe.html?id=${groupeId}`;
+
+            // Pré-remplir paramètres
+            document.getElementById('s-nom').value = groupe.nom;
+            document.getElementById('s-max').value = groupe.maxJoueursMatch || 10;
+
+            // Pré-remplir config hebdo
+            prefillConfigHebdo(groupe.configHebdo);
+
+            // Pré-remplir le formulaire créneau manuel
+            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('creneau-date').value = tomorrow.toLocaleDateString('en-CA');
+            document.getElementById('creneau-date').min = new Date().toLocaleDateString('en-CA');
+            document.getElementById('creneau-max').value = groupe.maxJoueursMatch || 10;
+
+            document.getElementById('page-loader').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+
+            await loadMembres();
+        }
+
+        function prefillConfigHebdo(cfg) {
+            if (!cfg) return;
+            document.getElementById('config-recurring').checked = cfg.recurring || false;
+            if (cfg.recurring) {
+                document.getElementById('config-hebdo-fields').classList.remove('hidden');
+            }
+            if (cfg.matchJour !== undefined) document.getElementById('config-match-jour').value = cfg.matchJour;
+            if (cfg.matchHeure) document.getElementById('config-match-heure').value = cfg.matchHeure;
+            if (cfg.inscriptionJour !== undefined) document.getElementById('config-insc-jour').value = cfg.inscriptionJour;
+            if (cfg.inscriptionHeure) document.getElementById('config-insc-heure').value = cfg.inscriptionHeure;
+            updateNextOuvertureLabel(cfg.nextOuvertureDate);
+        }
+
+        function updateNextOuvertureLabel(dateISO) {
+            const el = document.getElementById('config-next-ouverture');
+            if (!dateISO) { el.classList.add('hidden'); return; }
+            const d = new Date(dateISO);
+            const label = d.toLocaleString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem' });
+            el.textContent = `⏰ Prochaine ouverture : ${label}`;
+            el.classList.remove('hidden');
+        }
+
+        async function loadMembres() {
+            const snap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS));
+            const tous = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            const pending = tous.filter(m => m.statut === 'pending');
+            const actifs  = tous.filter(m => m.statut === 'active');
+
+            // Badges et compteurs
+            const pendingBadge = document.getElementById('pending-badge');
+            if (pending.length > 0) {
+                pendingBadge.textContent = `${pending.length} en attente`;
+                pendingBadge.classList.remove('hidden');
+            } else {
+                pendingBadge.classList.add('hidden');
+            }
+            document.getElementById('pending-count-tab').textContent = pending.length > 0 ? pending.length : '';
+            document.getElementById('membres-count-tab').textContent = actifs.length;
+
+            renderPending(pending);
+            renderMembres(actifs);
+            membresActifsCache = actifs;
+            if (document.getElementById('tab-matchs') && !document.getElementById('tab-matchs').classList.contains('hidden')) {
+                buildMatchPlayersTable(actifs);
+            }
+        }
+
+        // ========== EN ATTENTE ==========
+        function renderPending(pending) {
+            const container = document.getElementById('pending-list');
+            if (!pending.length) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        <h3>Aucune demande en attente</h3>
+                        <p>Partage le code <strong>${groupe.code}</strong> pour inviter des joueurs.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="pending-grid">
+                    ${pending.map(m => `
+                        <div class="pending-card" data-id="${m.id}">
+                            <div class="pending-info">
+                                <div class="pending-avatar">${(m.displayName || '?').slice(0,2).toUpperCase()}</div>
+                                <div>
+                                    <div class="pending-name">${m.displayName || 'Inconnu'}</div>
+                                    <span class="pos-badge ${(m.position || '').toLowerCase()}">${m.position || '—'}</span>
+                                    ${m.profilMilieu ? `<span class="profil-milieu">${m.profilMilieu}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="pending-actions">
+                                <button class="btn-action btn-primary btn-valider" data-id="${m.id}" data-nom="${m.displayName}">✓ Valider</button>
+                                <button class="btn-action btn-danger btn-refuser" data-id="${m.id}" data-nom="${m.displayName}">✕ Refuser</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+
+            container.querySelectorAll('.btn-valider').forEach(btn => {
+                btn.addEventListener('click', () => validerJoueur(btn.dataset.id, btn.dataset.nom, btn));
+            });
+            container.querySelectorAll('.btn-refuser').forEach(btn => {
+                btn.addEventListener('click', () => refuserJoueur(btn.dataset.id, btn.dataset.nom, btn));
+            });
+        }
+
+        // ========== MEMBRES ACTIFS ==========
+        function renderMembres(actifs) {
+            const tbody = document.getElementById('membres-tbody');
+            if (!actifs.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-td">Aucun membre actif.</td></tr>`;
+                return;
+            }
+
+            const sorted = [...actifs].sort((a, b) => (b.impactRating || 1000) - (a.impactRating || 1000));
+            tbody.innerHTML = sorted.map((m, i) => `
+                <tr>
+                    <td class="rank">${i + 1}</td>
+                    <td><strong>${m.displayName || '—'}</strong></td>
+                    <td><span class="pos-badge ${(m.position || '').toLowerCase()}">${m.position || '—'}</span></td>
+                    <td class="rating">${m.impactRating || 1000}</td>
+                    <td>${m.matchsJoues || 0}</td>
+                    <td class="vnd">${m.victoires || 0}V ${m.nuls || 0}N ${m.defaites || 0}D</td>
+                    <td>
+                        ${m.id !== currentUser.uid ? `<button class="btn-sm btn-danger btn-expulser" data-id="${m.id}" data-nom="${m.displayName}">Exclure</button>` : '<span class="you-badge">Toi</span>'}
+                    </td>
+                </tr>
+            `).join('');
+
+            tbody.querySelectorAll('.btn-expulser').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    membreAExpulser = btn.dataset.id;
+                    document.getElementById('modal-expulser-nom').textContent = `Exclure ${btn.dataset.nom} du groupe ?`;
+                    document.getElementById('modal-expulser').classList.remove('hidden');
+                });
+            });
+        }
+
+        // ========== ACTIONS ==========
+        async function validerJoueur(userId, nom, btn) {
+            btn.disabled = true;
+            btn.textContent = '...';
+            await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, userId), { statut: 'active' });
+            await loadMembres();
+        }
+
+        async function refuserJoueur(userId, nom, btn) {
+            btn.disabled = true;
+            btn.textContent = '...';
+            await deleteDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, userId));
+            await loadMembres();
+        }
+
+        document.getElementById('modal-expulser-cancel').addEventListener('click', () => {
+            document.getElementById('modal-expulser').classList.add('hidden');
+        });
+
+        document.getElementById('modal-expulser-confirm').addEventListener('click', async () => {
+            if (!membreAExpulser) return;
+            await deleteDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, membreAExpulser));
+            document.getElementById('modal-expulser').classList.add('hidden');
+            membreAExpulser = null;
+            await loadMembres();
+        });
+
+        // ========== PARAMÈTRES ==========
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nom = document.getElementById('s-nom').value.trim();
+            const max = parseInt(document.getElementById('s-max').value) || 10;
+            const msg = document.getElementById('settings-msg');
+
+            if (!nom) { showMsg(msg, 'Entre un nom.', 'error'); return; }
+
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId), { nom, maxJoueursMatch: max });
+            groupe.nom = nom;
+            groupe.maxJoueursMatch = max;
+            document.getElementById('groupe-titre').textContent = nom;
+            document.getElementById('nav-groupe-nom').textContent = nom;
+            showMsg(msg, 'Paramètres enregistrés !', 'success');
+            btn.disabled = false;
+            btn.textContent = 'Enregistrer';
+        });
+
+        function showMsg(el, text, type) {
+            el.textContent = text;
+            el.className = `form-msg ${type}`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        // ========== UTILITAIRE : arrondir à la tranche de 15 min la plus proche ==========
+        function snapTo15Min(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            const rounded = Math.round(m / 15) * 15;
+            const finalM = rounded === 60 ? 0 : rounded;
+            const finalH = rounded === 60 ? (h + 1) % 24 : h;
+            return `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
+        }
+
+        ['config-match-heure', 'config-insc-heure', 'creneau-heure'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', function() {
+                this.value = snapTo15Min(this.value);
+            });
+        });
+
+        // ========== CONFIG HEBDO ==========
+        document.getElementById('config-recurring').addEventListener('change', function() {
+            document.getElementById('config-hebdo-fields').classList.toggle('hidden', !this.checked);
+        });
+
+        document.getElementById('btn-save-hebdo').addEventListener('click', async () => {
+            const msg = document.getElementById('config-hebdo-msg');
+            const recurring = document.getElementById('config-recurring').checked;
+            const btn = document.getElementById('btn-save-hebdo');
+            btn.disabled = true; btn.textContent = '...';
+
+            try {
+                let configHebdo;
+
+                if (!recurring) {
+                    configHebdo = { actif: false, recurring: false };
+                } else {
+                    const matchJour = parseInt(document.getElementById('config-match-jour').value);
+                    const matchHeure = document.getElementById('config-match-heure').value;
+                    const inscriptionJour = parseInt(document.getElementById('config-insc-jour').value);
+                    const inscriptionHeure = document.getElementById('config-insc-heure').value;
+                    const maxJoueurs = parseInt(document.getElementById('s-max').value) || 10;
+
+                    // Calculer la prochaine date d'ouverture
+                    const nextOuvertureDate = calcNextOuverture(inscriptionJour, inscriptionHeure);
+
+                    configHebdo = {
+                        actif: true,
+                        recurring: true,
+                        matchJour, matchHeure,
+                        inscriptionJour, inscriptionHeure,
+                        maxJoueurs,
+                        nextOuvertureDate: nextOuvertureDate.toISOString()
+                    };
+
+                    updateNextOuvertureLabel(configHebdo.nextOuvertureDate);
+                }
+
+                await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId), { configHebdo });
+                groupe.configHebdo = configHebdo;
+
+                // Pré-créer le doc matchs_semaine avec statut 'programmé' pour que
+                // le timer client-side ouvre les inscriptions à l'heure exacte (zéro délai)
+                if (recurring) {
+                    // Supprimer les anciens docs 'programmé' s'il y en a
+                    const oldSnap = await getDocs(query(
+                        collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE),
+                        where('statut', '==', 'programmé')
+                    ));
+                    for (const d of oldSnap.docs) await deleteDoc(d.ref);
+
+                    // Calculer la date du match
+                    const ouvertureDate = new Date(configHebdo.nextOuvertureDate);
+                    const matchJour = configHebdo.matchJour;
+                    const [h, m] = configHebdo.matchHeure.split(':').map(Number);
+                    // Date du match : prochain `matchJour` après l'ouverture
+                    const matchDate = new Date(ouvertureDate);
+                    const luxonJour = matchJour === 0 ? 7 : matchJour;
+                    const currentDay = ouvertureDate.getDay() === 0 ? 7 : ouvertureDate.getDay();
+                    let daysUntil = (luxonJour - currentDay + 7) % 7 || 7;
+                    matchDate.setDate(matchDate.getDate() + daysUntil);
+                    matchDate.setHours(h, m, 0, 0);
+
+                    await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), {
+                        dateMatch: matchDate.toISOString(),
+                        dateOuvertureInscription: ouvertureDate.toISOString(),
+                        maxJoueurs: configHebdo.maxJoueurs || groupe.maxJoueursMatch || 10,
+                        statut: 'programmé',
+                        confirmedCount: 0,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+
+                showMsg(msg, recurring ? 'Config hebdo enregistrée ✓' : 'Créneau récurrent désactivé.', 'success');
+            } catch (err) {
+                console.error(err);
+                showMsg(msg, 'Erreur lors de la sauvegarde.', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Enregistrer la config hebdo';
+            }
+        });
+
+        function calcNextOuverture(inscriptionJour, inscriptionHeure) {
+            const [h, m] = inscriptionHeure.split(':').map(Number);
+            const now = new Date();
+            // Travailler en heure de Jérusalem (Asia/Jerusalem)
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Jerusalem',
+                weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: false
+            });
+            const parts = Object.fromEntries(formatter.formatToParts(now).map(p => [p.type, p.value]));
+            const jours = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const currentDay = jours.indexOf(parts.weekday);
+            const currentTime = parseInt(parts.hour === '24' ? '0' : parts.hour) * 60 + parseInt(parts.minute);
+            const targetTime = h * 60 + m;
+
+            let daysUntil = (inscriptionJour - currentDay + 7) % 7;
+            if (daysUntil === 0 && currentTime >= targetTime) daysUntil = 7;
+
+            const target = new Date(now);
+            target.setDate(target.getDate() + daysUntil);
+            // Ajuster l'heure pour correspondre à l'heure Jerusalem
+            const tzDate = new Date(new Date(`${target.toLocaleDateString('en-CA')} ${inscriptionHeure}`).toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+            const localDate = new Date(`${target.toLocaleDateString('en-CA')} ${inscriptionHeure}`);
+            const offset = localDate - tzDate;
+            target.setHours(h, m, 0, 0);
+            return new Date(target.getTime() + (new Date().getTimezoneOffset() * 60000) - getJerusalemOffset(target));
+        }
+
+        function getJerusalemOffset(date) {
+            const utc = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+            const jerusalem = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+            return utc - jerusalem;
+        }
+
+        // ========== INSCRIPTIONS (vue admin) ==========
+        let currentOpenMatch = null;
+
+        async function loadInscriptionsAdmin() {
+            const container = document.getElementById('inscriptions-admin-content');
+            try {
+                const snap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE));
+                const matchs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .filter(m => m.statut === 'ouvert')
+                    .sort((a, b) => new Date(a.dateMatch) - new Date(b.dateMatch));
+
+                if (!matchs.length) {
+                    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><h3>Pas de créneau actif</h3><p>Active le créneau récurrent dans les Paramètres ou attends l'ouverture automatique.</p></div>`;
+                    return;
+                }
+
+                currentOpenMatch = matchs[0];
+                const match = currentOpenMatch;
+                const dateMatch = new Date(match.dateMatch).toLocaleString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem' });
+
+                const inscSnap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, match.id, COLLECTIONS.INSCRIPTIONS));
+                const inscrits = inscSnap.docs.map(d => d.data()).sort((a, b) => new Date(a.dateInscription) - new Date(b.dateInscription));
+
+                const confirmes = inscrits.filter(i => i.statut === 'confirmé');
+                const attente = inscrits.filter(i => i.statut === 'attente');
+
+                container.innerHTML = `
+                    <div class="match-info-banner">
+                        <div class="match-info-left">
+                            <span class="match-status-badge badge-open">🟢 Inscriptions ouvertes</span>
+                            <div class="match-info-date">⚽ ${dateMatch}</div>
+                        </div>
+                        <div class="match-info-right">
+                            <span class="match-places">${confirmes.length}/${match.maxJoueurs} joueurs</span>
+                        </div>
+                    </div>
+
+                    <div class="inscriptions-grid">
+                        <div>
+                            <h4 class="insc-section-title">✅ Confirmés (${confirmes.length})</h4>
+                            ${confirmes.length ? `<div class="insc-list">${confirmes.map((p, i) => `
+                                <div class="insc-row">
+                                    <span class="insc-num">${i+1}</span>
+                                    <span class="insc-name">${p.displayName}</span>
+                                    <span class="pos-badge ${(p.position||'').toLowerCase()}">${p.position||'—'}</span>
+                                </div>`).join('')}</div>` : '<p class="insc-empty">Aucun joueur inscrit</p>'}
+                        </div>
+                        <div>
+                            <h4 class="insc-section-title">⏳ Liste d'attente (${attente.length})</h4>
+                            ${attente.length ? `<div class="insc-list">${attente.map((p, i) => `
+                                <div class="insc-row insc-row-wait">
+                                    <span class="insc-num">${i+1}</span>
+                                    <span class="insc-name">${p.displayName}</span>
+                                    <span class="pos-badge ${(p.position||'').toLowerCase()}">${p.position||'—'}</span>
+                                </div>`).join('')}</div>` : '<p class="insc-empty">Personne en attente</p>'}
+                        </div>
+                    </div>
+
+                    ${confirmes.length >= 4 ? `
+                    <button id="btn-generer-equipes" class="btn-action btn-primary" style="margin-top:1.5rem">🎲 Générer les équipes</button>
+                    <div id="equipes-generees" class="hidden" style="margin-top:1.5rem"></div>
+                    ` : ''}
+                `;
+
+                document.getElementById('btn-generer-equipes')?.addEventListener('click', () => {
+                    genererEquipes(confirmes);
+                });
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p style="color:var(--text-muted)">Erreur de chargement.</p>`;
+            }
+        }
+
+        function genererEquipes(joueurs) {
+            // Enrichir avec le rating actuel depuis la sous-collection joueurs (Option B)
+            const enriched = joueurs.map(j => {
+                const membre = membresActifsCache.find(m => m.id === (j.uid || j.id));
+                return { ...j, impactRating: membre?.impactRating ?? 1000 };
+            });
+            const sorted = [...enriched].sort((a, b) => (b.impactRating || 1000) - (a.impactRating || 1000));
+            const equipeA = [], equipeB = [];
+            sorted.forEach((j, i) => {
+                // Snake draft : A B B A A B B A ...
+                const cycle = Math.floor(i / 2);
+                const posInCycle = i % 2;
+                const goesToA = cycle % 2 === 0 ? posInCycle === 0 : posInCycle === 1;
+                (goesToA ? equipeA : equipeB).push(j);
+            });
+
+            const renderTeam = (equipe, label) => `
+                <div class="rating-team">
+                    <h4 class="${label === 'A' ? 'team-a-label' : 'team-b-label'}">Équipe ${label}</h4>
+                    ${equipe.map(j => `<div class="rating-change-row"><span>${j.displayName}</span><span class="pos-badge ${(j.position||'').toLowerCase()}">${j.position||'—'}</span><span style="color:var(--text-muted)">${j.impactRating||1000}</span></div>`).join('')}
+                </div>`;
+
+            const container = document.getElementById('equipes-generees');
+            container.innerHTML = `<div class="rating-changes">${renderTeam(equipeA, 'A')}${renderTeam(equipeB, 'B')}</div>`;
+            container.classList.remove('hidden');
+        }
+
+        // ========== CRÉER CRÉNEAU MANUELLEMENT ==========
+        document.getElementById('toggle-creneau-form').addEventListener('click', () => {
+            const wrapper = document.getElementById('creneau-form-wrapper');
+            const icon = document.getElementById('creneau-toggle-icon');
+            const isHidden = wrapper.classList.contains('hidden');
+            wrapper.classList.toggle('hidden');
+            icon.textContent = isHidden ? '−' : '＋';
+        });
+
+        document.getElementById('btn-creer-creneau').addEventListener('click', async () => {
+            const date = document.getElementById('creneau-date').value;
+            const heure = document.getElementById('creneau-heure').value;
+            const max = parseInt(document.getElementById('creneau-max').value) || groupe?.maxJoueursMatch || 10;
+            const msg = document.getElementById('creneau-msg');
+            const btn = document.getElementById('btn-creer-creneau');
+
+            if (!date || !heure) {
+                showMsg(msg, 'Choisis une date et une heure.', 'error'); return;
+            }
+            const dateMatch = new Date(`${date}T${heure}`);
+            if (dateMatch <= new Date()) {
+                showMsg(msg, 'La date doit être dans le futur.', 'error'); return;
+            }
+
+            btn.disabled = true; btn.textContent = '...';
+            try {
+                await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), {
+                    dateMatch: dateMatch.toISOString(),
+                    maxJoueurs: max,
+                    statut: 'ouvert',
+                    confirmedCount: 0,
+                    createdAt: new Date().toISOString()
+                });
+                showMsg(msg, '✅ Créneau créé — les inscriptions sont ouvertes !', 'success');
+                document.getElementById('creneau-form-wrapper').classList.add('hidden');
+                document.getElementById('creneau-toggle-icon').textContent = '＋';
+                loadInscriptionsAdmin();
+            } catch (err) {
+                console.error(err);
+                showMsg(msg, 'Erreur lors de la création. Réessaye.', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '🟢 Ouvrir les inscriptions';
+            }
+        });
+
+        // ========== COPIER CODE ==========
+        document.getElementById('btn-copy-code').addEventListener('click', () => {
+            navigator.clipboard.writeText(groupe.code);
+            document.getElementById('btn-copy-code').textContent = '✅';
+            setTimeout(() => document.getElementById('btn-copy-code').textContent = '📋', 2000);
+        });
+
+        // ========== TABS ==========
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+                if (tab.dataset.tab === 'matchs') loadInscriptionsAdmin();
+            });
+        });
+
+        // ========== MATCH ==========
+        let membresActifsCache = [];
+
+        function buildMatchPlayersTable(membres) {
+            membresActifsCache = membres;
+            const tbody = document.getElementById('match-players-tbody');
+            if (!membres.length) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-td">Aucun membre actif.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = membres.map(m => `
+                <tr data-uid="${m.id}">
+                    <td><strong>${m.displayName || '—'}</strong></td>
+                    <td><span class="pos-badge ${(m.position||'').toLowerCase()}">${m.position||'—'}</span></td>
+                    <td class="team-col"><label class="team-radio team-a-radio">
+                        <input type="radio" name="team-${m.id}" value="A">
+                    </label></td>
+                    <td class="team-col"><label class="team-radio team-b-radio">
+                        <input type="radio" name="team-${m.id}" value="B">
+                    </label></td>
+                    <td><label class="team-radio">
+                        <input type="radio" name="team-${m.id}" value="absent" checked>
+                    </label></td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('btn-submit-match').addEventListener('click', async () => {
+            const errorEl = document.getElementById('match-error');
+            errorEl.classList.add('hidden');
+
+            const equipeA = [], equipeB = [];
+            document.querySelectorAll('#match-players-tbody tr[data-uid]').forEach(row => {
+                const uid = row.dataset.uid;
+                const checked = row.querySelector('input[type="radio"]:checked');
+                if (!checked || checked.value === 'absent') return;
+                const joueur = membresActifsCache.find(m => m.id === uid);
+                if (!joueur) return;
+                const j = { ...joueur, positionPrincipale: joueur.position };
+                if (checked.value === 'A') equipeA.push(j);
+                else equipeB.push(j);
+            });
+
+            if (equipeA.length < 2 || equipeB.length < 2) {
+                errorEl.textContent = 'Chaque équipe doit avoir au moins 2 joueurs.';
+                errorEl.classList.remove('hidden'); return;
+            }
+
+            const scoreA = parseInt(document.getElementById('score-a').value);
+            const scoreB = parseInt(document.getElementById('score-b').value);
+            if (isNaN(scoreA) || isNaN(scoreB) || scoreA < 0 || scoreB < 0) {
+                errorEl.textContent = 'Entre des scores valides.';
+                errorEl.classList.remove('hidden'); return;
+            }
+
+            const btn = document.getElementById('btn-submit-match');
+            btn.disabled = true; btn.textContent = '⏳ Calcul en cours...';
+
+            try {
+                const changements = calculerChangementsMatch(equipeA, equipeB, scoreA, scoreB, [], []);
+                const resultatA = scoreA > scoreB ? 'victoire' : scoreA < scoreB ? 'defaite' : 'nul';
+                const resultatB = scoreB > scoreA ? 'victoire' : scoreB < scoreA ? 'defaite' : 'nul';
+
+                const batch = writeBatch(db);
+
+                // Mettre à jour les stats des joueurs
+                [...equipeA, ...equipeB].forEach(joueur => {
+                    const delta = changements[joueur.id];
+                    const res = equipeA.includes(joueur) ? resultatA : resultatB;
+                    const ref = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, joueur.id);
+                    batch.update(ref, {
+                        impactRating: delta.nouveau,
+                        matchsJoues: (joueur.matchsJoues || 0) + 1,
+                        victoires: (joueur.victoires || 0) + (res === 'victoire' ? 1 : 0),
+                        nuls: (joueur.nuls || 0) + (res === 'nul' ? 1 : 0),
+                        defaites: (joueur.defaites || 0) + (res === 'defaite' ? 1 : 0)
+                    });
+                });
+
+                // Mettre à jour les synergies pour chaque équipe
+                const updateSynPairs = (equipe, resultat) => {
+                    const scoreDiff = resultat === 'victoire' ? (scoreA - scoreB) : (scoreB - scoreA);
+                    for (let i = 0; i < equipe.length; i++) {
+                        for (let j = i + 1; j < equipe.length; j++) {
+                            const [u1, u2] = [equipe[i].id, equipe[j].id].sort();
+                            const synRef = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.SYNERGIES, `${u1}-${u2}`);
+                            // On va lire les synergies existantes avant le batch
+                            // Stocker pour traitement après
+                        }
+                    }
+                };
+
+                await batch.commit();
+
+                // Synergies (séparément car nécessite lecture)
+                await updateSynergies(equipeA, equipeB, scoreA, scoreB, resultatA, resultatB);
+
+                // Sauvegarder le match
+                await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS), {
+                    date: new Date().toISOString(),
+                    equipeA: equipeA.map(j => j.id),
+                    equipeB: equipeB.map(j => j.id),
+                    scoreA, scoreB,
+                    statut: 'joue',
+                    changements,
+                    dateCreation: new Date().toISOString()
+                });
+
+                afficherResultats(changements, equipeA, equipeB, scoreA, scoreB, resultatA, resultatB);
+                await loadMembres();
+
+            } catch (err) {
+                console.error('Erreur soumission match:', err);
+                errorEl.textContent = 'Erreur lors de la soumission. Réessaye.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false; btn.textContent = '⚽ Valider le match';
+            }
+        });
+
+        async function updateSynergies(equipeA, equipeB, scoreA, scoreB, resultatA, resultatB) {
+            const teams = [
+                { equipe: equipeA, resultat: resultatA, diff: scoreA - scoreB },
+                { equipe: equipeB, resultat: resultatB, diff: scoreB - scoreA }
+            ];
+            for (const { equipe, resultat, diff } of teams) {
+                for (let i = 0; i < equipe.length; i++) {
+                    for (let j = i + 1; j < equipe.length; j++) {
+                        const [u1, u2] = [equipe[i].id, equipe[j].id].sort();
+                        const synRef = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.SYNERGIES, `${u1}-${u2}`);
+                        const snap = await getDoc(synRef);
+                        const d = snap.exists() ? { ...snap.data() } : { joueur1: u1, joueur2: u2, valeur: 0, matchsEnsemble: 0, victoires: 0, nuls: 0, defaites: 0 };
+                        d.matchsEnsemble++;
+                        if (resultat === 'victoire') { d.victoires++; d.valeur = Math.round((d.valeur + 1 + diff / 20) * 10) / 10; }
+                        else if (resultat === 'nul') { d.nuls++; }
+                        else { d.defaites++; d.valeur = Math.round((d.valeur - 1) * 10) / 10; }
+                        await setDoc(synRef, d);
+                    }
+                }
+            }
+        }
+
+        function afficherResultats(changements, equipeA, equipeB, scoreA, scoreB, resultatA, resultatB) {
+            document.getElementById('match-form-wrapper').classList.add('hidden');
+            document.getElementById('match-results').classList.remove('hidden');
+
+            const scoreLabel = resultatA === 'victoire' ? `🏆 ${scoreA} — ${scoreB}` : resultatA === 'nul' ? `🤝 ${scoreA} — ${scoreB}` : `${scoreA} — ${scoreB} 🏆`;
+            document.getElementById('results-score').innerHTML = `<span class="team-a-label">Équipe A</span> <span class="big-score">${scoreLabel}</span> <span class="team-b-label">Équipe B</span>`;
+
+            const renderTeam = (equipe, label, colorClass, resultat) => `
+                <div class="rating-team">
+                    <h4 class="${colorClass}">${label} — <span class="result-label-${resultat}">${resultat === 'victoire' ? '🏆 Victoire' : resultat === 'nul' ? '🤝 Nul' : '❌ Défaite'}</span></h4>
+                    ${equipe.map(j => {
+                        const c = changements[j.id];
+                        const sign = c.changement >= 0 ? '+' : '';
+                        const cls = c.changement > 0 ? 'delta-positive' : c.changement < 0 ? 'delta-negative' : 'delta-zero';
+                        return `<div class="rating-change-row">
+                            <span>${j.displayName}</span>
+                            <span>${c.ancien} → <strong>${c.nouveau}</strong> <span class="${cls}">(${sign}${c.changement})</span></span>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+
+            document.getElementById('rating-changes').innerHTML =
+                renderTeam(equipeA, 'Équipe A', 'team-a-label', resultatA) +
+                renderTeam(equipeB, 'Équipe B', 'team-b-label', resultatB);
+        }
+
+        document.getElementById('btn-nouveau-match').addEventListener('click', () => {
+            document.getElementById('match-results').classList.add('hidden');
+            document.getElementById('match-form-wrapper').classList.remove('hidden');
+            document.querySelectorAll('#match-players-tbody input[value="absent"]').forEach(r => r.checked = true);
+            document.getElementById('score-a').value = 0;
+            document.getElementById('score-b').value = 0;
+        });
+
+        // Peupler le tableau de match quand on clique sur l'onglet
+        document.querySelector('[data-tab="matchs"]').addEventListener('click', () => {
+            if (membresActifsCache.length === 0) {
+                getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS)).then(snap => {
+                    const actifs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.statut === 'active');
+                    buildMatchPlayersTable(actifs);
+                });
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

@@ -3,117 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impact Rating - Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/modal.css">
+    <title>Impact Rating — Gérez votre foot entre amis</title>
+    <link rel="stylesheet" href="css/landing.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <span class="logo">⚽</span>
-                <span class="brand-name">Impact Rating</span>
+
+    <!-- NAV -->
+    <nav class="landing-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="nav-logo">
+                <span class="logo-icon">⚽</span>
+                <span>Impact Rating</span>
+            </a>
+            <div class="nav-actions">
+                <a href="login.html" class="btn-ghost">Se connecter</a>
+                <a href="login.html?mode=register" class="btn-cta">Commencer gratuitement</a>
             </div>
-            <ul class="nav-links">
-                <li><a href="index.html" class="active">Dashboard</a></li>
-                <li><a href="synergies.html">Synergies</a></li>
-                <li><a href="historique.html">Historique</a></li>
-                <li><a href="algorithm.html">Algorithme</a></li>
-                <li><a href="admin-login.html" class="admin-btn">Admin</a></li>
-            </ul>
         </div>
     </nav>
 
-    <main class="container">
-        <section class="hero">
-            <div id="groupe-badge" class="groupe-badge" style="display: none;">
-                <span id="groupe-name">Chargement...</span>
-                <button id="change-groupe-btn" class="change-groupe-btn" title="Changer de groupe">
-                    🔄
-                </button>
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <div class="hero-badge">Nouveau — Inscription hebdo en ligne</div>
+            <h1>Gérez votre foot<br><span class="highlight">entre amis</span></h1>
+            <p class="hero-sub">
+                Classement en temps réel, synergies entre joueurs, inscription au match de la semaine —
+                tout ce qu'il faut pour organiser votre foot du vendredi.
+            </p>
+            <div class="hero-btns">
+                <a href="login.html?mode=register" class="btn-primary-lg">Créer mon compte</a>
+                <a href="login.html" class="btn-outline-lg">Se connecter</a>
             </div>
-            <h1>Dashboard des Joueurs</h1>
-            <p class="subtitle">Classement basé sur l'Impact Rating</p>
-            <button id="add-player-btn" class="btn btn-primary" style="margin-top: 1rem;">
-                ➕ Ajouter un joueur
-            </button>
-        </section>
+        </div>
+        <div class="hero-visual">
+            <div class="floating-card card-1">
+                <div class="fc-label">Meilleur joueur</div>
+                <div class="fc-name">Lionel M.</div>
+                <div class="fc-rating">1 284 <span>IR</span></div>
+            </div>
+            <div class="floating-card card-2">
+                <div class="fc-label">Match vendredi</div>
+                <div class="fc-spots">8 / 10 inscrits</div>
+                <div class="fc-bar"><div class="fc-bar-fill" style="width:80%"></div></div>
+            </div>
+            <div class="floating-card card-3">
+                <div class="fc-label">Meilleure synergie</div>
+                <div class="fc-pair">Ruben + David</div>
+                <div class="fc-score">⚡ 87%</div>
+            </div>
+            <div class="pitch-visual">
+                <div class="pitch-lines"></div>
+                <div class="pitch-center"></div>
+            </div>
+        </div>
+    </section>
 
-        <section class="stats-overview">
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-content">
-                    <h3 id="total-joueurs">0</h3>
-                    <p>Joueurs</p>
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="section-inner">
+            <div class="section-label">Fonctionnalités</div>
+            <h2>Tout ce dont vous avez besoin</h2>
+            <p class="section-sub">Un seul outil pour organiser, analyser et profiter de votre foot.</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Impact Rating</h3>
+                    <p>Un classement ELO-style qui évolue après chaque match. Victoires, défaites, présence — tout compte.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Synergies</h3>
+                    <p>Découvrez quels joueurs forment les meilleures paires et trios. Le système calcule automatiquement la chimie entre joueurs.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h3>Inscription hebdo</h3>
+                    <p>L'admin ouvre les inscriptions, les joueurs confirment leur présence. Liste d'attente automatique si complet.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚖️</div>
+                    <h3>Équipes équilibrées</h3>
+                    <p>Génération automatique des équipes basée sur les ratings et les synergies pour des matchs serrés.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Stats en temps réel</h3>
+                    <p>Classement mis à jour après chaque match. Historique complet, évolution du rating, V/N/D par joueur.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Multi-groupes</h3>
+                    <p>Rejoignez plusieurs groupes, chacun avec son propre classement, ses matchs et son admin.</p>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">🏆</div>
-                <div class="stat-content">
-                    <h3 id="total-matchs">0</h3>
-                    <p>Matchs joués</p>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works">
+        <div class="section-inner">
+            <div class="section-label">Simple et rapide</div>
+            <h2>Comment ça marche</h2>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h3>Créer un compte</h3>
+                        <p>Connectez-vous avec Google ou créez un compte email. En 30 secondes c'est fait.</p>
+                    </div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h3>Rejoindre un groupe</h3>
+                        <p>Entrez le code à 6 lettres donné par votre admin. Il valide votre arrivée.</p>
+                    </div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h3>Jouer et progresser</h3>
+                        <p>Inscrivez-vous aux matchs hebdo, suivez votre rating, montez au classement.</p>
+                    </div>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">⚽</div>
-                <div class="stat-content">
-                    <h3 id="total-buts">0</h3>
-                    <p>Buts marqués</p>
-                </div>
-            </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="players-section">
-            <div class="section-header">
-                <h2>Classement des Joueurs</h2>
-                <div class="filters">
-                    <button class="filter-btn active" data-filter="all">Tous</button>
-                    <button class="filter-btn" data-filter="Défenseur">Défenseurs</button>
-                    <button class="filter-btn" data-filter="Milieu">Milieux</button>
-                    <button class="filter-btn" data-filter="Attaquant">Attaquants</button>
-                </div>
-            </div>
+    <!-- CTA FINAL -->
+    <section class="cta-section">
+        <div class="section-inner">
+            <h2>Prêt à commencer ?</h2>
+            <p>Créez votre compte gratuitement et rejoignez votre groupe dès aujourd'hui.</p>
+            <a href="login.html?mode=register" class="btn-primary-lg">Créer mon compte gratuitement</a>
+        </div>
+    </section>
 
-            <div class="players-table">
-                <table id="players-list">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Joueur</th>
-                            <th>Position</th>
-                            <th>Impact Rating</th>
-                            <th>Matchs</th>
-                            <th>Buts ⚽</th>
-                            <th>V-N-D</th>
-                            <th>Présence</th>
-                        </tr>
-                    </thead>
-                    <tbody id="players-tbody">
-                        <!-- Rempli dynamiquement -->
-                        <tr class="loading-row">
-                            <td colspan="8">
-                                <div class="loading-spinner"></div>
-                                <p>Chargement des données...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+    <!-- FOOTER -->
+    <footer class="landing-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="logo-icon">⚽</span>
+                <span>Impact Rating</span>
             </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 Impact Rating - Fait avec ⚽ par Ruben</p>
+            <p class="footer-copy">&copy; 2026 Impact Rating — Fait avec passion par Ruben</p>
         </div>
     </footer>
 
-    <!-- Firebase SDK -->
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/app.js"></script>
+    <script type="module">
+        import { requireGuest } from './js/auth.js';
+        requireGuest();
+    </script>
 </body>
 </html>
-

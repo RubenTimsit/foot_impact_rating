@@ -1,88 +1,111 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // ==================== RÈGLES POUR LA COLLECTION GROUPES ====================
-    
-    // Collection groupes : lecture publique, pas d'écriture directe
-    match /groupes/{groupeId} {
-      // Tout le monde peut lire les infos des groupes (codes, noms)
-      allow read: if true;
-      
-      // Personne ne peut créer/modifier/supprimer directement
-      // (sauf via setup-groupes.html en développement)
+
+    // ==================== FONCTIONS UTILITAIRES ====================
+
+    // Vérifie que l'utilisateur est connecté
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Vérifie que l'utilisateur accède à sa propre ressource
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // Vérifie si l'utilisateur est membre actif d'un groupe
+    function isMembre(groupeId) {
+      return isAuth() && exists(/databases/$(database)/documents/groupes/$(groupeId)/joueurs/$(request.auth.uid));
+    }
+
+    // Vérifie si l'utilisateur est admin d'un groupe
+    function isAdminGroupe(groupeId) {
+      return isAuth() && get(/databases/$(database)/documents/groupes/$(groupeId)).data.adminId == request.auth.uid;
+    }
+
+    // ==================== COLLECTION ADMINS ====================
+    // Chaque utilisateur ne peut lire QUE son propre document admin
+    // Personne ne peut écrire (géré uniquement via Firebase Console)
+
+    match /admins/{userId} {
+      allow read: if isOwner(userId);
       allow write: if false;
-      
-      // ==================== SOUS-COLLECTION JOUEURS ====================
+    }
+
+    // ==================== COLLECTION USERS ====================
+    // Chaque joueur peut lire et écrire son propre profil
+
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    // ==================== COLLECTION GROUPES ====================
+
+    match /groupes/{groupeId} {
+      // Tout le monde connecté peut lire les groupes (pour vérifier les codes)
+      allow read: if isAuth();
+
+      // Tout utilisateur connecté peut créer un groupe (il en devient l'admin)
+      allow create: if isAuth() && request.resource.data.adminId == request.auth.uid;
+
+      // Seul l'admin du groupe peut modifier le groupe
+      allow update: if isAdminGroupe(groupeId);
+      allow delete: if false;
+
+      // ==================== SOUS-COLLECTION JOUEURS (membres du groupe) ====================
       match /joueurs/{joueurId} {
-        // Tout le monde peut lire la liste des joueurs
-        allow read: if true;
-        
-        // Tout le monde peut ajouter un nouveau joueur
-        allow create: if true;
-        
-        // Personne ne peut modifier ou supprimer (sauf admin)
-        // Pour une vraie sécurité, utilise Firebase Authentication
-        allow update, delete: if false;
+        // Les membres peuvent lire la liste
+        allow read: if isAuth();
+
+        // Un utilisateur connecté peut créer sa propre demande d'adhésion
+        allow create: if isOwner(joueurId);
+
+        // L'admin peut modifier le statut (valider/refuser), le joueur peut se mettre à jour lui-même
+        allow update: if isAdminGroupe(groupeId) || isOwner(joueurId);
+        allow delete: if isAdminGroupe(groupeId);
       }
-      
+
       // ==================== SOUS-COLLECTION MATCHS ====================
       match /matchs/{matchId} {
-        // Tout le monde peut lire l'historique des matchs
-        allow read: if true;
-        
-        // Personne ne peut écrire (sauf admin via le panel)
-        // Pour sécuriser, tu dois ajouter Firebase Auth
-        allow write: if false;
+        // Les membres actifs peuvent lire les matchs
+        allow read: if isAuth();
+
+        // Seul l'admin peut créer/modifier/supprimer des matchs
+        allow write: if isAdminGroupe(groupeId);
       }
-      
+
       // ==================== SOUS-COLLECTION SYNERGIES ====================
       match /synergies/{synergieId} {
-        // Tout le monde peut lire les synergies
-        allow read: if true;
-        
-        // Personne ne peut écrire (calculées automatiquement)
-        allow write: if false;
+        allow read: if isAuth();
+        allow write: if isAdminGroupe(groupeId);
+      }
+
+      // ==================== SOUS-COLLECTION MATCHS SEMAINE ====================
+      match /matchs_semaine/{matchId} {
+        allow read: if isAuth();
+
+        // L'admin peut créer/supprimer un créneau
+        allow create, delete: if isAdminGroupe(groupeId);
+
+        // L'admin OU un membre actif peut mettre à jour
+        // (les membres mettent à jour confirmedCount lors d'inscription/annulation)
+        allow update: if isAdminGroupe(groupeId) || isMembre(groupeId);
+
+        // ==================== INSCRIPTIONS ====================
+        match /inscriptions/{uid} {
+          allow read: if isMembre(groupeId);
+
+          // Un joueur peut s'inscrire lui-même si il est membre actif
+          allow create: if isOwner(uid) && isMembre(groupeId);
+
+          // Un joueur peut annuler sa propre inscription
+          allow delete: if isOwner(uid) && isMembre(groupeId);
+        }
       }
     }
   }
 }
-
-// ==================== RÈGLES AVANCÉES (AVEC FIREBASE AUTH) ====================
-// Décommente et configure si tu veux une vraie authentification admin
-
-/*
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    
-    // Fonction pour vérifier si l'utilisateur est admin
-    function isAdmin() {
-      // Remplace TON_UID_ADMIN par ton vrai UID Firebase
-      return request.auth != null && request.auth.uid == "TON_UID_ADMIN";
-    }
-    
-    match /groupes/{groupeId} {
-      allow read: if true;
-      allow write: if isAdmin();
-      
-      match /joueurs/{joueurId} {
-        allow read: if true;
-        allow create: if true;  // Tout le monde peut ajouter un joueur
-        allow update, delete: if isAdmin();  // Seul l'admin peut modifier/supprimer
-      }
-      
-      match /matchs/{matchId} {
-        allow read: if true;
-        allow write: if isAdmin();  // Seul l'admin peut créer des matchs
-      }
-      
-      match /synergies/{synergieId} {
-        allow read: if true;
-        allow write: if isAdmin();  // Seul l'admin peut modifier les synergies
-      }
-    }
-  }
-}
-*/
-

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin — Impact Rating</title>
+    <link rel="stylesheet" href="css/groupe.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <a href="profil.html" class="nav-logo">⚽ Impact Rating</a>
+            <div class="nav-right">
+                <span class="super-admin-badge">Super Admin</span>
+                <button id="btn-logout" class="btn-nav-logout">Déconnexion</button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="page-loader" class="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Chargement...</p>
+    </div>
+
+    <main id="main-content" class="hidden">
+        <div class="page-header">
+            <div class="page-header-inner">
+                <div>
+                    <h1>Dashboard Super Admin</h1>
+                    <p class="page-subtitle">Vue globale de tous les groupes et utilisateurs</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+
+            <!-- STATS GLOBALES -->
+            <div class="stats-grid" id="stats-globales">
+                <div class="stat-card">
+                    <div class="stat-icon">🏟️</div>
+                    <div class="stat-body">
+                        <div class="stat-num" id="stat-groupes">—</div>
+                        <div class="stat-label">Groupes actifs</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-body">
+                        <div class="stat-num" id="stat-users">—</div>
+                        <div class="stat-label">Comptes créés</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-body">
+                        <div class="stat-num" id="stat-pending">—</div>
+                        <div class="stat-label">Demandes en attente</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LISTE DES GROUPES -->
+            <section class="content-section">
+                <div class="section-header-row">
+                    <h2>Tous les groupes</h2>
+                </div>
+                <div id="groupes-list" class="table-container">
+                    <div class="loading-row"><div class="loader-spinner small"></div></div>
+                </div>
+            </section>
+
+            <!-- LISTE DES UTILISATEURS -->
+            <section class="content-section">
+                <div class="section-header-row">
+                    <h2>Tous les utilisateurs</h2>
+                </div>
+                <div id="users-list" class="table-container">
+                    <div class="loading-row"><div class="loader-spinner small"></div></div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { requireAuth, isSuperAdmin, deconnecter } from './js/auth.js';
+        import { db, collection, getDocs, COLLECTIONS } from './js/firebase-config.js';
+
+        async function init() {
+            const user = await requireAuth();
+            if (!(await isSuperAdmin(user.uid))) {
+                window.location.href = 'profil.html';
+                return;
+            }
+            document.getElementById('page-loader').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            await loadAll();
+        }
+
+        async function loadAll() {
+            const [groupesSnap, usersSnap] = await Promise.all([
+                getDocs(collection(db, COLLECTIONS.GROUPES)),
+                getDocs(collection(db, 'users'))
+            ]);
+
+            const groupes = groupesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            // Compter les demandes en attente
+            let pendingTotal = 0;
+            for (const g of groupes) {
+                const membresSnap = await getDocs(collection(db, COLLECTIONS.GROUPES, g.id, COLLECTIONS.JOUEURS));
+                g.membres = membresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                g.pendingCount = g.membres.filter(m => m.statut === 'pending').length;
+                pendingTotal += g.pendingCount;
+            }
+
+            document.getElementById('stat-groupes').textContent = groupes.length;
+            document.getElementById('stat-users').textContent = users.length;
+            document.getElementById('stat-pending').textContent = pendingTotal;
+
+            renderGroupes(groupes, users);
+            renderUsers(users);
+        }
+
+        function renderGroupes(groupes, users) {
+            const container = document.getElementById('groupes-list');
+            if (!groupes.length) { container.innerHTML = '<p class="empty-msg">Aucun groupe.</p>'; return; }
+
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Nom</th><th>Code</th><th>Admin</th><th>Membres</th><th>En attente</th><th>Max/match</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                        ${groupes.map(g => {
+                            const admin = users.find(u => u.id === g.adminId);
+                            return `<tr>
+                                <td><strong>${g.nom}</strong></td>
+                                <td><code class="code-badge">${g.code}</code></td>
+                                <td>${admin?.displayName || (g.adminId ? g.adminId.slice(0,8)+'...' : '—')}</td>
+                                <td>${g.membres?.filter(m => m.statut === 'active').length || 0}</td>
+                                <td>${g.pendingCount > 0 ? `<span class="badge badge-warning">${g.pendingCount}</span>` : '0'}</td>
+                                <td>${g.maxJoueursMatch || '?'}</td>
+                                <td>
+                                    <a href="admin-groupe.html?id=${g.id}" class="btn-sm btn-primary">Gérer</a>
+                                    <a href="groupe.html?id=${g.id}" class="btn-sm btn-ghost">Voir</a>
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>`;
+        }
+
+        function renderUsers(users) {
+            const container = document.getElementById('users-list');
+            if (!users.length) { container.innerHTML = '<p class="empty-msg">Aucun utilisateur.</p>'; return; }
+
+            const sorted = [...users].sort((a, b) => new Date(a.dateInscription) - new Date(b.dateInscription));
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Nom</th><th>Email</th><th>Position</th><th>Profil complet</th><th>Inscription</th>
+                    </tr></thead>
+                    <tbody>
+                        ${sorted.map(u => `<tr>
+                            <td><strong>${u.displayName || '—'}</strong></td>
+                            <td>${u.email}</td>
+                            <td>${u.position ? `<span class="pos-badge ${u.position.toLowerCase()}">${u.position}</span>` : '—'}</td>
+                            <td>${u.profilComplet ? '✅' : '⏳'}</td>
+                            <td>${u.dateInscription ? new Date(u.dateInscription).toLocaleDateString('fr-FR') : '—'}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>`;
+        }
+
+        document.getElementById('btn-logout').addEventListener('click', deconnecter);
+        init();
+    </script>
+</body>
+</html>

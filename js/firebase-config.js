@@ -14,8 +14,8 @@ const firebaseConfig = {
 // ==================== INITIALISATION ====================
 // Import des modules Firebase nécessaires
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, query, where, orderBy, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, setDoc, doc, query, where, orderBy, deleteDoc, serverTimestamp, writeBatch, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 // Initialiser Firebase
 const app = initializeApp(firebaseConfig);
@@ -27,25 +27,35 @@ export {
     db, 
     auth,
     collection, 
-    getDocs, 
-    addDoc, 
-    updateDoc, 
+    getDocs,
+    getDoc,
+    addDoc,
+    updateDoc,
+    setDoc,
     doc, 
     query,
     where,
     orderBy,
     deleteDoc,
+    serverTimestamp,
+    writeBatch,
+    increment,
+    runTransaction,
     signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithPopup
 };
 
 // ==================== COLLECTIONS ====================
 export const COLLECTIONS = {
     GROUPES: 'groupes',
-    // Sous-collections (à utiliser avec le path du groupe)
     JOUEURS: 'joueurs',
     MATCHS: 'matchs',
-    SYNERGIES: 'synergies'
+    SYNERGIES: 'synergies',
+    MATCHS_SEMAINE: 'matchs_semaine',
+    INSCRIPTIONS: 'inscriptions'
 };
 

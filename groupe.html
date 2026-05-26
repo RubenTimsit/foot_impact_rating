@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupe — Impact Rating</title>
+    <link rel="stylesheet" href="css/groupe.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <a href="profil.html" class="nav-logo">⚽ Impact Rating</a>
+            <div class="nav-right">
+                <span id="nav-groupe-nom" class="nav-groupe-nom"></span>
+                <a href="profil.html" class="btn-nav-ghost">← Mes groupes</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="page-loader" class="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Chargement...</p>
+    </div>
+
+    <main id="main-content" class="hidden">
+
+        <div class="page-header">
+            <div class="page-header-inner">
+                <div>
+                    <h1 id="groupe-titre"></h1>
+                    <p class="page-subtitle" id="groupe-subtitle"></p>
+                </div>
+                <div class="header-actions" id="admin-actions" style="display:none">
+                    <a id="btn-admin" href="#" class="btn-sm btn-primary">⚙️ Admin</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="content-wrapper">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-body">
+                        <div class="stat-num" id="stat-joueurs">—</div>
+                        <div class="stat-label">Joueurs</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-body">
+                        <div class="stat-num" id="stat-matchs">—</div>
+                        <div class="stat-label">Matchs joués</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-body">
+                        <div class="stat-num" id="stat-top">—</div>
+                        <div class="stat-label">Meilleur joueur</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROCHAIN MATCH -->
+            <div id="prochain-match-container" class="hidden" style="margin-bottom:1.5rem"></div>
+
+            <!-- TABS -->
+            <div class="tabs-bar inline">
+                <button class="tab active" data-tab="classement">Classement</button>
+                <button class="tab" data-tab="historique" id="tab-historique-btn">Historique</button>
+                <button class="tab" data-tab="synergies" id="tab-synergies-btn">Synergies</button>
+            </div>
+
+            <!-- CLASSEMENT -->
+            <div id="tab-classement" class="tab-content active">
+                <div class="table-container">
+                    <!-- FILTRES -->
+                    <div class="filters-row">
+                        <button class="filter-btn active" data-filter="all">Tous</button>
+                        <button class="filter-btn" data-filter="Gardien">Gardiens</button>
+                        <button class="filter-btn" data-filter="Défenseur">Défenseurs</button>
+                        <button class="filter-btn" data-filter="Milieu">Milieux</button>
+                        <button class="filter-btn" data-filter="Attaquant">Attaquants</button>
+                    </div>
+                    <table class="data-table" id="classement-table">
+                        <thead><tr>
+                            <th>#</th>
+                            <th>Joueur</th>
+                            <th>Position</th>
+                            <th>Impact Rating</th>
+                            <th>Matchs</th>
+                            <th>V-N-D</th>
+                            <th>Présence</th>
+                        </tr></thead>
+                        <tbody id="classement-tbody">
+                            <tr><td colspan="7" class="loading-td"><div class="loader-spinner small"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- HISTORIQUE -->
+            <div id="tab-historique" class="tab-content hidden">
+                <div id="historique-list">
+                    <div class="loading-td" style="padding:3rem;text-align:center"><div class="loader-spinner small"></div></div>
+                </div>
+            </div>
+
+            <!-- SYNERGIES -->
+            <div id="tab-synergies" class="tab-content hidden">
+                <div id="synergies-list">
+                    <div class="loading-td" style="padding:3rem;text-align:center"><div class="loader-spinner small"></div></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { requireAuth } from './js/auth.js';
+        import { db, collection, getDocs, doc, getDoc, query, orderBy, setDoc, deleteDoc, updateDoc, increment, runTransaction, COLLECTIONS } from './js/firebase-config.js';
+
+        const params = new URLSearchParams(window.location.search);
+        const groupeId = params.get('id');
+        let currentUser = null;
+        let allJoueurs = [];
+        let monMembreData = null;
+        let historiqueLoaded = false;
+        let synergiesLoaded = false;
+
+        async function init() {
+            if (!groupeId) { window.location.href = 'profil.html'; return; }
+
+            currentUser = await requireAuth();
+
+            const snap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId));
+            if (!snap.exists()) { window.location.href = 'profil.html'; return; }
+
+            const groupe = { id: snap.id, ...snap.data() };
+
+            // Vérifier que l'utilisateur est membre actif
+            const membreSnap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, currentUser.uid));
+            if (!membreSnap.exists() || membreSnap.data().statut !== 'active') {
+                window.location.href = 'profil.html';
+                return;
+            }
+            monMembreData = { id: membreSnap.id, ...membreSnap.data() };
+
+            document.getElementById('nav-groupe-nom').textContent = groupe.nom;
+            document.getElementById('groupe-titre').textContent = groupe.nom;
+            document.getElementById('groupe-subtitle').textContent = `Code : ${groupe.code} · Max ${groupe.maxJoueursMatch || '?'} joueurs/match`;
+
+            // Bouton admin si c'est l'admin
+            if (groupe.adminId === currentUser.uid) {
+                document.getElementById('btn-admin').href = `admin-groupe.html?id=${groupeId}`;
+                document.getElementById('admin-actions').style.display = '';
+            }
+
+            document.getElementById('page-loader').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+
+            await loadData(groupeId);
+            await loadProchainMatch();
+        }
+
+        async function loadData(groupeId) {
+            const [joueursSnap, matchsSnap] = await Promise.all([
+                getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS)),
+                getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS))
+            ]);
+
+            allJoueurs = joueursSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(j => j.statut === 'active')
+                .sort((a, b) => (b.impactRating || 1000) - (a.impactRating || 1000));
+
+            const matchs = matchsSnap.docs.map(d => d.data());
+            const totalMatchs = matchs.filter(m => m.statut === 'joue').length;
+
+            document.getElementById('stat-joueurs').textContent = allJoueurs.length;
+            document.getElementById('stat-matchs').textContent = totalMatchs;
+            document.getElementById('stat-top').textContent = allJoueurs[0]?.displayName || '—';
+
+            renderClassement(allJoueurs, totalMatchs);
+        }
+
+        function renderClassement(joueurs, totalMatchs) {
+            const tbody = document.getElementById('classement-tbody');
+            if (!joueurs.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-td">Aucun joueur actif.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = joueurs.map((j, i) => {
+                const presence = totalMatchs > 0 ? Math.round((j.matchsJoues || 0) / totalMatchs * 100) : 0;
+                const isMoi = j.id === currentUser.uid;
+                return `
+                <tr class="${isMoi ? 'row-me' : ''}">
+                    <td class="rank">${getRankEmoji(i + 1)}</td>
+                    <td>
+                        <span class="player-name">${j.displayName || '—'}</span>
+                        ${isMoi ? '<span class="you-badge">Toi</span>' : ''}
+                    </td>
+                    <td><span class="pos-badge ${(j.position || '').toLowerCase()}">${j.position || '—'}</span></td>
+                    <td class="rating">${j.impactRating || 1000}</td>
+                    <td>${j.matchsJoues || 0}</td>
+                    <td class="vnd">${j.victoires || 0}V ${j.nuls || 0}N ${j.defaites || 0}D</td>
+                    <td>
+                        <div class="presence-wrap">
+                            <div class="presence-bar"><div class="presence-fill" style="width:${presence}%"></div></div>
+                            <span>${presence}%</span>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function getRankEmoji(rank) {
+            if (rank === 1) return '🥇';
+            if (rank === 2) return '🥈';
+            if (rank === 3) return '🥉';
+            return rank;
+        }
+
+        // ========== FILTRES ==========
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.dataset.filter;
+                const filtered = filter === 'all' ? allJoueurs : allJoueurs.filter(j => j.position === filter);
+                const totalMatchs = parseInt(document.getElementById('stat-matchs').textContent) || 0;
+                renderClassement(filtered, totalMatchs);
+            });
+        });
+
+        // ========== PROCHAIN MATCH ==========
+        let countdownTimer = null;
+
+        async function loadProchainMatch() {
+            const container = document.getElementById('prochain-match-container');
+            if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+            try {
+                const snap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE));
+                const matchs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .filter(m => m.statut === 'ouvert' || m.statut === 'programmé')
+                    .sort((a, b) => new Date(a.dateMatch) - new Date(b.dateMatch));
+
+                if (!matchs.length) return;
+
+                const match = matchs[0];
+                container.classList.remove('hidden');
+
+                const inscSnap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, match.id, COLLECTIONS.INSCRIPTIONS, currentUser.uid));
+                const monInscription = inscSnap.exists() ? inscSnap.data() : null;
+
+                // Si le match est 'programmé' et l'ouverture n'est pas encore passée : afficher countdown
+                if (match.statut === 'programmé' && match.dateOuvertureInscription) {
+                    const ouvertureDate = new Date(match.dateOuvertureInscription);
+                    if (new Date() < ouvertureDate) {
+                        renderCountdown(match, ouvertureDate, monInscription);
+                        return;
+                    }
+                }
+
+                renderProchainMatch(match, monInscription);
+            } catch (err) {
+                console.error('Erreur prochain match:', err);
+            }
+        }
+
+        function renderCountdown(match, ouvertureDate, monInscription) {
+            const container = document.getElementById('prochain-match-container');
+            const dateMatch = new Date(match.dateMatch).toLocaleString('fr-FR', {
+                weekday: 'long', day: 'numeric', month: 'long',
+                hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem'
+            });
+
+            function updateCountdown() {
+                const msLeft = ouvertureDate - new Date();
+                if (msLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                    // Inscriptions ouvertes côté client — afficher le bouton immédiatement
+                    renderProchainMatch(match, monInscription);
+                    return;
+                }
+                const h = Math.floor(msLeft / 3600000);
+                const m = Math.floor((msLeft % 3600000) / 60000);
+                const s = Math.floor((msLeft % 60000) / 1000);
+                const parts = [];
+                if (h > 0) parts.push(`${h}h`);
+                if (m > 0 || h > 0) parts.push(`${String(m).padStart(2,'0')}min`);
+                parts.push(`${String(s).padStart(2,'0')}s`);
+                const cdEl = document.getElementById('pm-countdown-value');
+                if (cdEl) cdEl.textContent = parts.join(' ');
+            }
+
+            container.innerHTML = `
+                <div class="prochain-match-card">
+                    <div class="pm-left">
+                        <div class="pm-title">⚽ Prochain match</div>
+                        <div class="pm-date">${dateMatch.charAt(0).toUpperCase() + dateMatch.slice(1)}</div>
+                        <div class="pm-stat">${match.maxJoueurs || 10} places disponibles</div>
+                    </div>
+                    <div class="pm-right">
+                        <span class="match-status-badge badge-scheduled">⏳ Inscriptions dans <strong id="pm-countdown-value">…</strong></span>
+                    </div>
+                </div>`;
+
+            updateCountdown();
+            countdownTimer = setInterval(updateCountdown, 1000);
+        }
+
+        function renderProchainMatch(match, monInscription) {
+            const container = document.getElementById('prochain-match-container');
+            const dateMatch = new Date(match.dateMatch).toLocaleString('fr-FR', {
+                weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem'
+            });
+                const confirmedCount = match.confirmedCount || 0;
+            const maxJoueurs = match.maxJoueurs || 10;
+            const places = maxJoueurs - confirmedCount;
+
+            let statutHtml = '';
+            let btnHtml = '';
+            if (match.statut !== 'ouvert') {
+                statutHtml = `<span class="match-status-badge badge-scheduled">⏳ Inscriptions pas encore ouvertes</span>`;
+            } else if (monInscription?.statut === 'confirmé') {
+                statutHtml = `<span class="match-status-badge badge-confirmed">✅ Tu es inscrit · Confirmé</span>`;
+                btnHtml = `<button id="btn-desinscrire" class="btn-action btn-ghost btn-sm-insc">Annuler mon inscription</button>`;
+            } else if (monInscription?.statut === 'attente') {
+                statutHtml = `<span class="match-status-badge badge-wait">⏳ Tu es en liste d'attente</span>`;
+                btnHtml = `<button id="btn-desinscrire" class="btn-action btn-ghost btn-sm-insc">Annuler</button>`;
+            } else {
+                statutHtml = places > 0
+                    ? `<span class="match-status-badge badge-open">🟢 ${places} place${places > 1 ? 's' : ''} disponible${places > 1 ? 's' : ''}</span>`
+                    : `<span class="match-status-badge badge-wait">🔴 Complet — liste d'attente</span>`;
+                btnHtml = `<button id="btn-inscrire" class="btn-action btn-primary btn-sm-insc">S'inscrire</button>`;
+            }
+
+            container.innerHTML = `
+                <div class="prochain-match-card">
+                    <div class="pm-left">
+                        <div class="pm-title">⚽ Prochain match</div>
+                        <div class="pm-date">${dateMatch}</div>
+                        <div class="pm-stat">${confirmedCount}/${maxJoueurs} joueurs inscrits</div>
+                    </div>
+                    <div class="pm-right">
+                        ${statutHtml}
+                        ${btnHtml}
+                    </div>
+                </div>`;
+
+            document.getElementById('btn-inscrire')?.addEventListener('click', () => sInscrire(match));
+            document.getElementById('btn-desinscrire')?.addEventListener('click', () => seDesinscrire(match, monInscription));
+        }
+
+        async function sInscrire(match) {
+            const btn = document.getElementById('btn-inscrire');
+            if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+            const matchRef = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, match.id);
+            const inscriptionRef = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, match.id, COLLECTIONS.INSCRIPTIONS, currentUser.uid);
+
+            let statutFinal;
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const matchSnap = await transaction.get(matchRef);
+                    const inscSnap  = await transaction.get(inscriptionRef);
+
+                    if (inscSnap.exists()) throw new Error('already_registered');
+                    if (!matchSnap.exists()) throw new Error('match_not_found');
+
+                    const data = matchSnap.data();
+                    // Accepter statut 'ouvert' ET les docs 'programmé' dont l'ouverture est passée (client-side)
+                    const isOuvert = data.statut === 'ouvert' ||
+                        (data.statut === 'programmé' && data.dateOuvertureInscription && new Date() >= new Date(data.dateOuvertureInscription));
+                    if (!isOuvert) throw new Error('match_closed');
+
+                    const confirmedCount = data.confirmedCount || 0;
+                    statutFinal = confirmedCount < data.maxJoueurs ? 'confirmé' : 'attente';
+
+                    transaction.set(inscriptionRef, {
+                        uid: currentUser.uid,
+                        displayName: monMembreData.displayName || currentUser.displayName || '—',
+                        position: monMembreData.position || '—',
+                        statut: statutFinal,
+                        dateInscription: new Date().toISOString()
+                    });
+
+                    if (statutFinal === 'confirmé') {
+                        transaction.update(matchRef, { confirmedCount: increment(1) });
+                    }
+                });
+
+                match.confirmedCount = (match.confirmedCount || 0) + (statutFinal === 'confirmé' ? 1 : 0);
+                renderProchainMatch(match, { statut: statutFinal });
+            } catch (err) {
+                if (err.message === 'already_registered') { await loadProchainMatch(); return; }
+                console.error('Erreur inscription:', err);
+                if (btn) { btn.disabled = false; btn.textContent = "S'inscrire"; }
+            }
+        }
+
+        async function seDesinscrire(match, monInscription) {
+            const btn = document.getElementById('btn-desinscrire');
+            if (btn) { btn.disabled = true; btn.textContent = '...'; }
+            try {
+                const matchRef = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, match.id);
+                const inscriptionRef = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, match.id, COLLECTIONS.INSCRIPTIONS, currentUser.uid);
+
+                await deleteDoc(inscriptionRef);
+
+                if (monInscription?.statut === 'confirmé') {
+                    await updateDoc(matchRef, { confirmedCount: increment(-1) });
+                    match.confirmedCount = Math.max(0, (match.confirmedCount || 1) - 1);
+                }
+
+                renderProchainMatch(match, null);
+            } catch (err) {
+                console.error('Erreur désinscription:', err);
+                if (btn) { btn.disabled = false; btn.textContent = 'Annuler mon inscription'; }
+            }
+        }
+
+        // ========== HISTORIQUE ==========
+        async function loadHistorique() {
+            if (historiqueLoaded) return;
+            historiqueLoaded = true;
+            try {
+                const snap = await getDocs(query(
+                    collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS),
+                    orderBy('dateCreation', 'desc')
+                ));
+                const matchs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.statut === 'joue');
+                renderHistorique(matchs);
+            } catch(e) {
+                document.getElementById('historique-list').innerHTML = `<p style="text-align:center;color:var(--text-muted)">Erreur de chargement.</p>`;
+            }
+        }
+
+        function renderHistorique(matchs) {
+            const container = document.getElementById('historique-list');
+            if (!matchs.length) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Aucun match joué</h3><p>Les matchs saisis par l'admin apparaîtront ici.</p></div>`;
+                return;
+            }
+            const joueurNom = uid => allJoueurs.find(j => j.id === uid)?.displayName || uid.slice(0, 8) + '…';
+            container.innerHTML = matchs.map(m => {
+                const date = new Date(m.dateCreation).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+                const resultat = m.scoreA > m.scoreB ? 'A' : m.scoreA < m.scoreB ? 'B' : 'N';
+                const renderEquipePlayers = (equipe, res) => (equipe || []).map(uid => {
+                    const c = m.changements?.[uid];
+                    if (!c) return `<span class="hist-player">${joueurNom(uid)}</span>`;
+                    const sign = c.changement >= 0 ? '+' : '';
+                    const cls = c.changement > 0 ? 'delta-positive' : c.changement < 0 ? 'delta-negative' : 'delta-zero';
+                    return `<span class="hist-player">${joueurNom(uid)} <span class="${cls}">${sign}${c.changement}</span></span>`;
+                }).join('');
+                return `
+                <div class="match-card">
+                    <div class="match-card-header">
+                        <span class="match-date">${date}</span>
+                        <div class="match-scoreboard">
+                            <span class="ms-label ${resultat === 'A' ? 'ms-winner' : ''}">Éq. A</span>
+                            <span class="ms-score">${m.scoreA} — ${m.scoreB}</span>
+                            <span class="ms-label ${resultat === 'B' ? 'ms-winner' : ''}">Éq. B</span>
+                        </div>
+                    </div>
+                    <div class="match-teams">
+                        <div class="match-team ${resultat === 'A' ? 'team-winner' : ''}">
+                            <div class="mt-title team-a-label">Équipe A ${resultat === 'A' ? '🏆' : ''}</div>
+                            <div class="mt-players">${renderEquipePlayers(m.equipeA, resultat === 'A' ? 'victoire' : 'defaite')}</div>
+                        </div>
+                        <div class="match-team ${resultat === 'B' ? 'team-winner' : ''}">
+                            <div class="mt-title team-b-label">Équipe B ${resultat === 'B' ? '🏆' : ''}</div>
+                            <div class="mt-players">${renderEquipePlayers(m.equipeB, resultat === 'B' ? 'victoire' : 'defaite')}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ========== SYNERGIES ==========
+        async function loadSynergies() {
+            if (synergiesLoaded) return;
+            synergiesLoaded = true;
+            try {
+                const snap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.SYNERGIES));
+                const synergies = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .filter(s => s.matchsEnsemble >= 2)
+                    .sort((a, b) => b.valeur - a.valeur);
+                renderSynergies(synergies);
+            } catch(e) {
+                document.getElementById('synergies-list').innerHTML = `<p style="text-align:center;color:var(--text-muted)">Erreur de chargement.</p>`;
+            }
+        }
+
+        function renderSynergies(synergies) {
+            const container = document.getElementById('synergies-list');
+            if (!synergies.length) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚡</div><h3>Pas encore de synergies</h3><p>Les synergies se calculent à partir de 2 matchs joués ensemble.</p></div>`;
+                return;
+            }
+            const joueurNom = uid => allJoueurs.find(j => j.id === uid)?.displayName || uid.slice(0, 8) + '…';
+            const topPositive = synergies.filter(s => s.valeur > 0).slice(0, 10);
+            const topNegative = [...synergies].filter(s => s.valeur < 0).sort((a, b) => a.valeur - b.valeur).slice(0, 5);
+
+            const renderCard = s => {
+                const sign = s.valeur >= 0 ? '+' : '';
+                const cls = s.valeur > 0 ? 'syn-positive' : s.valeur < 0 ? 'syn-negative' : 'syn-neutral';
+                return `
+                <div class="syn-card ${cls}">
+                    <div class="syn-pair">${joueurNom(s.joueur1)} <span class="syn-amp">&</span> ${joueurNom(s.joueur2)}</div>
+                    <div class="syn-score">${sign}${s.valeur}</div>
+                    <div class="syn-stats">${s.matchsEnsemble} matchs · ${s.victoires}V ${s.nuls}N ${s.defaites}D</div>
+                </div>`;
+            };
+
+            container.innerHTML = `
+                ${topPositive.length ? `<h4 class="syn-section-title">⚡ Top synergies</h4><div class="syn-grid">${topPositive.map(renderCard).join('')}</div>` : ''}
+                ${topNegative.length ? `<h4 class="syn-section-title" style="margin-top:2rem">💀 Duos maudits</h4><div class="syn-grid">${topNegative.map(renderCard).join('')}</div>` : ''}
+            `;
+        }
+
+        // ========== TABS ==========
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+                if (tab.dataset.tab === 'historique') loadHistorique();
+                if (tab.dataset.tab === 'synergies') loadSynergies();
+            });
+        });
+
+        init();
+    </script>
+</body>
+</html>

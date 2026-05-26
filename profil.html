@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact Rating — Mon Profil</title>
+    <link rel="stylesheet" href="css/profil.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav class="profil-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="nav-logo">
+                <span>⚽</span> Impact Rating
+            </a>
+            <div class="nav-user" id="nav-user">
+                <img id="nav-avatar" src="" alt="" class="nav-avatar hidden">
+                <span id="nav-name"></span>
+                <button id="btn-logout" class="btn-logout">Déconnexion</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- LOADING INITIAL -->
+    <div id="page-loader" class="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Chargement de ton profil...</p>
+    </div>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main id="main-content" class="hidden">
+
+        <!-- BANNIÈRE COMPLÉTION PROFIL -->
+        <div id="complete-banner" class="complete-banner hidden">
+            <div class="banner-inner">
+                <span class="banner-icon">👋</span>
+                <div>
+                    <strong>Bienvenue ! Complete ton profil pour rejoindre un groupe.</strong>
+                    <p>Choisis ta position sur le terrain pour que l'admin puisse t'intégrer.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="profil-layout">
+
+            <!-- COLONNE GAUCHE — Profil -->
+            <aside class="profil-sidebar">
+                <div class="profil-card">
+                    <div class="profil-avatar-wrap">
+                        <img id="profil-photo" src="" alt="" class="profil-photo hidden">
+                        <div id="profil-initiales" class="profil-initiales"></div>
+                    </div>
+                    <div class="profil-info">
+                        <h2 id="profil-nom">...</h2>
+                        <p id="profil-email" class="profil-email">...</p>
+                        <span id="profil-position-badge" class="position-badge hidden"></span>
+                    </div>
+                </div>
+
+                <!-- FORMULAIRE COMPLÉTION / ÉDITION PROFIL -->
+                <div class="profil-form-card" id="profil-form-section">
+                    <h3 id="form-title">Compléter mon profil</h3>
+                    <form id="profil-form">
+                        <div class="form-group">
+                            <label for="f-prenom">Prénom affiché</label>
+                            <input type="text" id="f-prenom" placeholder="Ton prénom" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="f-position">Position sur le terrain</label>
+                            <select id="f-position" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="Gardien">Gardien</option>
+                                <option value="Défenseur">Défenseur</option>
+                                <option value="Milieu">Milieu</option>
+                                <option value="Attaquant">Attaquant</option>
+                            </select>
+                        </div>
+                        <div class="form-group hidden" id="profil-group">
+                            <label for="f-profil">Profil milieu</label>
+                            <select id="f-profil">
+                                <option value="">-- Choisir --</option>
+                                <option value="Défensif">Défensif</option>
+                                <option value="Box-to-box">Box-to-box</option>
+                                <option value="Offensif">Offensif</option>
+                            </select>
+                        </div>
+                        <div id="form-msg" class="form-msg hidden"></div>
+                        <button type="submit" class="btn-save">Enregistrer</button>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- COLONNE DROITE — Groupes -->
+            <div class="profil-main">
+
+                <div class="groups-header">
+                    <h2>Mes groupes</h2>
+                    <div class="groups-actions">
+                        <button id="btn-rejoindre" class="btn-action btn-secondary">
+                            🔑 Rejoindre un groupe
+                        </button>
+                        <button id="btn-creer" class="btn-action btn-primary">
+                            ➕ Créer un groupe
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Liste des groupes -->
+                <div id="groups-list" class="groups-list">
+                    <div class="groups-empty hidden" id="groups-empty">
+                        <div class="empty-icon">🏟️</div>
+                        <h3>Pas encore de groupe</h3>
+                        <p>Rejoins un groupe existant avec un code ou crée le tien.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL — Rejoindre un groupe -->
+    <div id="modal-rejoindre" class="modal-overlay hidden">
+        <div class="modal-box">
+            <button class="modal-close" data-modal="modal-rejoindre">✕</button>
+            <h3>Rejoindre un groupe</h3>
+            <p>Entre le code à 6 lettres donné par l'admin du groupe.</p>
+            <div class="form-group">
+                <input type="text" id="input-code" placeholder="Ex: ROSLAN" maxlength="6"
+                    style="text-transform:uppercase; letter-spacing: 0.2em; font-size: 1.3rem; text-align: center;">
+            </div>
+            <div id="rejoindre-msg" class="form-msg hidden"></div>
+            <div class="modal-btns">
+                <button class="btn-action btn-ghost" data-modal="modal-rejoindre">Annuler</button>
+                <button id="btn-confirmer-code" class="btn-action btn-primary">Rejoindre</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL — Créer un groupe -->
+    <div id="modal-creer" class="modal-overlay hidden">
+        <div class="modal-box">
+            <button class="modal-close" data-modal="modal-creer">✕</button>
+            <h3>Créer un groupe</h3>
+            <p>Tu seras l'admin de ce groupe. Un code unique sera généré automatiquement.</p>
+            <div class="form-group">
+                <label>Nom du groupe</label>
+                <input type="text" id="input-nom-groupe" placeholder="Ex: Les Légendaires" maxlength="30">
+            </div>
+            <div class="form-group">
+                <label>Nombre max de joueurs par match</label>
+                <input type="number" id="input-max-joueurs" placeholder="Ex: 10" min="4" max="30" value="10">
+            </div>
+            <div id="creer-msg" class="form-msg hidden"></div>
+            <div class="modal-btns">
+                <button class="btn-action btn-ghost" data-modal="modal-creer">Annuler</button>
+                <button id="btn-confirmer-creer" class="btn-action btn-primary">Créer le groupe</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { requireAuth, getUserProfile, updateUserProfile, deconnecter, getUtilisateurActuel } from './js/auth.js';
+        import { db, collection, getDocs, addDoc, query, where, doc, setDoc, getDoc, COLLECTIONS } from './js/firebase-config.js';
+
+        let currentUser = null;
+        let userProfile = null;
+
+        // ========== INIT ==========
+        async function init() {
+            currentUser = await requireAuth();
+            userProfile = await getUserProfile(currentUser.uid);
+
+            hideLoader();
+            renderNav();
+            renderProfil();
+            await loadGroupes();
+        }
+
+        function hideLoader() {
+            document.getElementById('page-loader').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+        }
+
+        // ========== NAV ==========
+        function renderNav() {
+            document.getElementById('nav-name').textContent = userProfile?.displayName || currentUser.email;
+            const avatar = document.getElementById('nav-avatar');
+            if (currentUser.photoURL) {
+                avatar.src = currentUser.photoURL;
+                avatar.classList.remove('hidden');
+            }
+        }
+
+        // ========== PROFIL ==========
+        function renderProfil() {
+            const nom = userProfile?.displayName || currentUser.displayName || '';
+            const email = currentUser.email;
+            const position = userProfile?.position;
+
+            document.getElementById('profil-nom').textContent = nom || 'Sans nom';
+            document.getElementById('profil-email').textContent = email;
+
+            // Avatar
+            if (currentUser.photoURL) {
+                document.getElementById('profil-photo').src = currentUser.photoURL;
+                document.getElementById('profil-photo').classList.remove('hidden');
+                document.getElementById('profil-initiales').classList.add('hidden');
+            } else {
+                const initiales = (nom || email).slice(0, 2).toUpperCase();
+                document.getElementById('profil-initiales').textContent = initiales;
+            }
+
+            // Badge position
+            if (position) {
+                const badge = document.getElementById('profil-position-badge');
+                badge.textContent = position;
+                badge.className = `position-badge ${position.toLowerCase()}`;
+                badge.classList.remove('hidden');
+                document.getElementById('form-title').textContent = 'Modifier mon profil';
+            } else {
+                document.getElementById('complete-banner').classList.remove('hidden');
+            }
+
+            // Pré-remplir formulaire
+            document.getElementById('f-prenom').value = nom;
+            document.getElementById('f-position').value = position || '';
+            document.getElementById('f-profil').value = userProfile?.profilMilieu || '';
+            if (position === 'Milieu') {
+                document.getElementById('profil-group').classList.remove('hidden');
+            }
+        }
+
+        // ========== FORMULAIRE PROFIL ==========
+        document.getElementById('f-position').addEventListener('change', (e) => {
+            document.getElementById('profil-group').classList.toggle('hidden', e.target.value !== 'Milieu');
+        });
+
+        document.getElementById('profil-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const msg = document.getElementById('form-msg');
+            const prenom = document.getElementById('f-prenom').value.trim();
+            const position = document.getElementById('f-position').value;
+            const profilMilieu = position === 'Milieu' ? document.getElementById('f-profil').value : null;
+
+            if (!prenom) { showFormMsg('Entre ton prénom.', 'error'); return; }
+            if (!position) { showFormMsg('Choisis une position.', 'error'); return; }
+            if (position === 'Milieu' && !profilMilieu) { showFormMsg('Choisis ton profil de milieu.', 'error'); return; }
+
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            await updateUserProfile(currentUser.uid, {
+                displayName: prenom,
+                position,
+                profilMilieu: profilMilieu || null,
+                profilComplet: true
+            });
+
+            userProfile = await getUserProfile(currentUser.uid);
+            renderProfil();
+            document.getElementById('complete-banner').classList.add('hidden');
+            showFormMsg('Profil enregistré !', 'success');
+            btn.disabled = false;
+            btn.textContent = 'Enregistrer';
+        });
+
+        function showFormMsg(text, type) {
+            const el = document.getElementById('form-msg');
+            el.textContent = text;
+            el.className = `form-msg ${type}`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        // ========== GROUPES ==========
+        async function loadGroupes() {
+            const list = document.getElementById('groups-list');
+            const empty = document.getElementById('groups-empty');
+
+            // Chercher tous les groupes où userId est membre actif
+            try {
+                const groupesSnap = await getDocs(collection(db, COLLECTIONS.GROUPES));
+                const mesGroupes = [];
+
+                for (const groupeDoc of groupesSnap.docs) {
+                    const membreRef = doc(db, COLLECTIONS.GROUPES, groupeDoc.id, COLLECTIONS.JOUEURS, currentUser.uid);
+                    const membreSnap = await getDoc(membreRef);
+                    if (membreSnap.exists()) {
+                        mesGroupes.push({ id: groupeDoc.id, ...groupeDoc.data(), membre: membreSnap.data() });
+                    }
+                }
+
+                if (mesGroupes.length === 0) {
+                    empty.classList.remove('hidden');
+                } else {
+                    empty.classList.add('hidden');
+                    mesGroupes.forEach(g => {
+                        list.appendChild(renderGroupeCard(g));
+                        if (g.membre?.statut === 'active') {
+                            loadMatchStatus(g.id);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Erreur chargement groupes:', err);
+            }
+        }
+
+        function renderGroupeCard(groupe) {
+            const isAdmin = groupe.adminId === currentUser.uid;
+            const statut = groupe.membre?.statut || 'pending';
+            const card = document.createElement('div');
+            card.className = 'group-card';
+            card.innerHTML = `
+                <div class="gc-header">
+                    <div>
+                        <h3 class="gc-nom">${groupe.nom}</h3>
+                        <span class="gc-code">Code : ${groupe.code}</span>
+                    </div>
+                    <div class="gc-badges">
+                        ${isAdmin ? '<span class="badge badge-admin">Admin</span>' : ''}
+                        ${statut === 'pending' ? '<span class="badge badge-pending">En attente</span>' : '<span class="badge badge-active">Actif</span>'}
+                    </div>
+                </div>
+                <div class="gc-stats">
+                    <span>⚽ Max ${groupe.maxJoueursMatch || '?'} joueurs/match</span>
+                </div>
+                ${statut === 'active' ? `
+                <div id="gc-nm-${groupe.id}" class="gc-next-match">
+                    <div class="gc-nm-skeleton"></div>
+                </div>
+                <div class="gc-actions">
+                    <a href="groupe.html?id=${groupe.id}" class="btn-action btn-outline-sm">Voir le groupe →</a>
+                    ${isAdmin ? `<a href="admin-groupe.html?id=${groupe.id}" class="btn-action btn-primary-sm">Gérer le groupe</a>` : ''}
+                </div>` : '<p class="gc-pending-msg">En attente de validation par l\'admin.</p>'}
+            `;
+            return card;
+        }
+
+        // ========== REJOINDRE UN GROUPE ==========
+        document.getElementById('btn-rejoindre').addEventListener('click', () => {
+            if (!userProfile?.profilComplet) {
+                showFormMsg('Complete ton profil avant de rejoindre un groupe.', 'error');
+                document.getElementById('profil-form-section').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            openModal('modal-rejoindre');
+        });
+
+        document.getElementById('btn-confirmer-code').addEventListener('click', async () => {
+            const code = document.getElementById('input-code').value.trim().toUpperCase();
+            const msg = document.getElementById('rejoindre-msg');
+
+            if (code.length !== 6) { showModalMsg('rejoindre-msg', 'Le code doit contenir 6 lettres.', 'error'); return; }
+
+            document.getElementById('btn-confirmer-code').disabled = true;
+            document.getElementById('btn-confirmer-code').textContent = '...';
+
+            try {
+                const q = query(collection(db, COLLECTIONS.GROUPES), where('code', '==', code));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    showModalMsg('rejoindre-msg', 'Code invalide. Vérifie auprès de ton admin.', 'error');
+                    return;
+                }
+
+                const groupe = snap.docs[0];
+                const membreRef = doc(db, COLLECTIONS.GROUPES, groupe.id, COLLECTIONS.JOUEURS, currentUser.uid);
+                const membreSnap = await getDoc(membreRef);
+
+                if (membreSnap.exists()) {
+                    showModalMsg('rejoindre-msg', 'Tu es déjà dans ce groupe.', 'error');
+                    return;
+                }
+
+                // Créer le membre en statut pending
+                await setDoc(membreRef, {
+                    userId: currentUser.uid,
+                    displayName: userProfile.displayName,
+                    position: userProfile.position,
+                    profilMilieu: userProfile.profilMilieu || null,
+                    statut: 'pending',
+                    impactRating: 1000,
+                    matchsJoues: 0,
+                    victoires: 0,
+                    nuls: 0,
+                    defaites: 0,
+                    dateAjout: new Date().toISOString()
+                });
+
+                showModalMsg('rejoindre-msg', `Demande envoyée à "${groupe.data().nom}" ! L'admin doit te valider.`, 'success');
+                setTimeout(() => { closeModal('modal-rejoindre'); window.location.reload(); }, 2500);
+
+            } catch (err) {
+                console.error(err);
+                showModalMsg('rejoindre-msg', 'Erreur. Réessaye.', 'error');
+            } finally {
+                document.getElementById('btn-confirmer-code').disabled = false;
+                document.getElementById('btn-confirmer-code').textContent = 'Rejoindre';
+            }
+        });
+
+        // ========== CRÉER UN GROUPE ==========
+        document.getElementById('btn-creer').addEventListener('click', () => {
+            if (!userProfile?.profilComplet) {
+                showFormMsg('Complete ton profil avant de créer un groupe.', 'error');
+                document.getElementById('profil-form-section').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            openModal('modal-creer');
+        });
+
+        document.getElementById('btn-confirmer-creer').addEventListener('click', async () => {
+            const nom = document.getElementById('input-nom-groupe').value.trim();
+            const max = parseInt(document.getElementById('input-max-joueurs').value) || 10;
+
+            if (!nom) { showModalMsg('creer-msg', 'Entre un nom pour le groupe.', 'error'); return; }
+
+            document.getElementById('btn-confirmer-creer').disabled = true;
+            document.getElementById('btn-confirmer-creer').textContent = '...';
+
+            try {
+                const code = genererCode();
+                const groupeRef = await addDoc(collection(db, COLLECTIONS.GROUPES), {
+                    nom,
+                    code,
+                    adminId: currentUser.uid,
+                    maxJoueursMatch: max,
+                    dateCreation: new Date().toISOString(),
+                    actif: true
+                });
+
+                // L'admin est automatiquement membre actif
+                await setDoc(doc(db, COLLECTIONS.GROUPES, groupeRef.id, COLLECTIONS.JOUEURS, currentUser.uid), {
+                    userId: currentUser.uid,
+                    displayName: userProfile.displayName,
+                    position: userProfile.position,
+                    profilMilieu: userProfile.profilMilieu || null,
+                    statut: 'active',
+                    impactRating: 1000,
+                    matchsJoues: 0,
+                    victoires: 0,
+                    nuls: 0,
+                    defaites: 0,
+                    dateAjout: new Date().toISOString()
+                });
+
+                showModalMsg('creer-msg', `Groupe "${nom}" créé ! Code : ${code}`, 'success');
+                setTimeout(() => { closeModal('modal-creer'); window.location.reload(); }, 2500);
+
+            } catch (err) {
+                console.error(err);
+                showModalMsg('creer-msg', 'Erreur lors de la création. Réessaye.', 'error');
+            } finally {
+                document.getElementById('btn-confirmer-creer').disabled = false;
+                document.getElementById('btn-confirmer-creer').textContent = 'Créer le groupe';
+            }
+        });
+
+        function genererCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        }
+
+        // ========== MODALS ==========
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        function showModalMsg(id, text, type) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = `form-msg ${type}`;
+            el.classList.remove('hidden');
+        }
+
+        document.querySelectorAll('[data-modal]').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.modal));
+        });
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeModal(overlay.id);
+            });
+        });
+
+        // ========== DÉCONNEXION ==========
+        document.getElementById('btn-logout').addEventListener('click', deconnecter);
+
+        // ========== INDICATEUR PROCHAIN MATCH ==========
+        async function loadMatchStatus(groupeId) {
+            const container = document.getElementById(`gc-nm-${groupeId}`);
+            if (!container) return;
+            try {
+                const snap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE));
+                const matchs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .filter(m => m.statut === 'ouvert')
+                    .sort((a, b) => new Date(a.dateMatch) - new Date(b.dateMatch));
+
+                if (!matchs.length) {
+                    container.classList.add('hidden');
+                    return;
+                }
+
+                const match = matchs[0];
+                const dateMatch = new Date(match.dateMatch).toLocaleString('fr-FR', {
+                    weekday: 'long', day: 'numeric', month: 'long',
+                    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem'
+                });
+                const dateMatchCapitalized = dateMatch.charAt(0).toUpperCase() + dateMatch.slice(1);
+
+                const inscSnap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, match.id, COLLECTIONS.INSCRIPTIONS, currentUser.uid));
+                const monInscription = inscSnap.exists() ? inscSnap.data() : null;
+
+                let badgeHtml = '';
+                if (monInscription?.statut === 'confirmé') {
+                    badgeHtml = `<span class="gc-insc-badge badge-inscrit">✅ Inscrit</span>`;
+                } else if (monInscription?.statut === 'attente') {
+                    badgeHtml = `<span class="gc-insc-badge badge-attente">⏳ Liste d'attente</span>`;
+                } else {
+                    const places = (match.maxJoueurs || 10) - (match.confirmedCount || 0);
+                    if (places > 0) {
+                        badgeHtml = `<span class="gc-insc-badge badge-open">🟢 ${places} place${places > 1 ? 's' : ''}</span>`;
+                    } else {
+                        badgeHtml = `<span class="gc-insc-badge badge-complet">🔴 Complet</span>`;
+                    }
+                }
+
+                container.innerHTML = `
+                    <div class="gc-nm-row">
+                        <div class="gc-nm-left">
+                            <div class="gc-nm-icon">⚽</div>
+                            <div class="gc-nm-info">
+                                <span class="gc-nm-label">Prochain match</span>
+                                <span class="gc-nm-date">${dateMatchCapitalized}</span>
+                            </div>
+                        </div>
+                        <div class="gc-nm-right">
+                            ${badgeHtml}
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                container.classList.add('hidden');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
