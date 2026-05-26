@@ -46,13 +46,33 @@ exports.processMatchSemaine = onSchedule({
 }, async () => {
     const now = new Date();
 
-    const groupesSnap = await db.collection('groupes')
-        .where('configHebdo.actif', '==', true)
-        .where('configHebdo.recurring', '==', true)
-        .get();
+    // Récupérer les groupes avec au moins un créneau actif (nouveau format)
+    // + groupes legacy (ancien champ configHebdo)
+    const [newSnap, legacySnap] = await Promise.all([
+        db.collection('groupes').where('configHebdoActif', '==', true).get(),
+        db.collection('groupes').where('configHebdo.actif', '==', true)
+            .where('configHebdo.recurring', '==', true).get()
+    ]);
+    const groupeIds = new Set();
+    const groupeDocs = [];
+    for (const d of [...newSnap.docs, ...legacySnap.docs]) {
+        if (!groupeIds.has(d.id)) { groupeIds.add(d.id); groupeDocs.push(d); }
+    }
 
-    for (const groupeDoc of groupesSnap.docs) {
-        const config = groupeDoc.data().configHebdo;
+    for (const groupeDoc of groupeDocs) {
+        const data = groupeDoc.data();
+
+        // Récupérer les configs actives (nouveau format configHebdos map + legacy)
+        const configs = [];
+        if (data.configHebdos) {
+            Object.entries(data.configHebdos).forEach(([id, cfg]) => {
+                if (cfg.actif) configs.push({ _id: id, ...cfg });
+            });
+        } else if (data.configHebdo?.actif && data.configHebdo?.recurring) {
+            configs.push({ _id: 'legacy', ...data.configHebdo });
+        }
+
+    for (const config of configs) {
 
         // 1. Fermer les matchs dont l'heure est passée
         const ouvertsSnap = await db.collection('groupes').doc(groupeDoc.id)
@@ -63,23 +83,26 @@ exports.processMatchSemaine = onSchedule({
             }
         }
 
-        // 2. Flip 'programmé' → 'ouvert' (fallback si le client n'a pas encore ouvert)
-        //    + pré-créer le créneau suivant
+        // 2. Flip 'programmé' → 'ouvert' (fallback) + pré-créer le créneau suivant
         const programmeSnap = await db.collection('groupes').doc(groupeDoc.id)
             .collection('matchs_semaine').where('statut', '==', 'programmé').get();
 
         for (const matchDoc of programmeSnap.docs) {
-            const data = matchDoc.data();
-            if (!data.dateOuvertureInscription) continue;
-            const ouvertureDate = new Date(data.dateOuvertureInscription);
+            const matchData = matchDoc.data();
+            if (!matchData.dateOuvertureInscription) continue;
+            const ouvertureDate = new Date(matchData.dateOuvertureInscription);
 
             if (now >= ouvertureDate) {
-                // Flip ce doc à 'ouvert'
                 await matchDoc.ref.update({ statut: 'ouvert' });
 
-                // Prochaine ouverture = ouvertureDate + 7 jours
                 const nextOuverture = new Date(ouvertureDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-                await groupeDoc.ref.update({ 'configHebdo.nextOuvertureDate': nextOuverture.toISOString() });
+
+                // Mettre à jour nextOuvertureDate (nouveau format ou legacy)
+                if (config._id !== 'legacy') {
+                    await groupeDoc.ref.update({ [`configHebdos.${config._id}.nextOuvertureDate`]: nextOuverture.toISOString() });
+                } else {
+                    await groupeDoc.ref.update({ 'configHebdo.nextOuvertureDate': nextOuverture.toISOString() });
+                }
 
                 // Pré-créer le créneau de la semaine suivante
                 const nextDateMatch = getMatchDate(nextOuverture, config.matchJour, config.matchHeure);
@@ -94,26 +117,34 @@ exports.processMatchSemaine = onSchedule({
             }
         }
 
-        // 3. Si aucun doc à venir (programmé ou ouvert) n'existe → en créer un (rattrapage)
-        const upcomingSnap = await db.collection('groupes').doc(groupeDoc.id)
-            .collection('matchs_semaine')
-            .where('statut', 'in', ['programmé', 'ouvert'])
-            .get();
+        // 3. Rattrapage : si aucun doc à venir pour cette config, en créer un
+        if (config.nextOuvertureDate) {
+            const upcomingSnap = await db.collection('groupes').doc(groupeDoc.id)
+                .collection('matchs_semaine')
+                .where('statut', 'in', ['programmé', 'ouvert'])
+                .get();
 
-        if (upcomingSnap.empty && config.nextOuvertureDate) {
-            const nextOuverture = new Date(config.nextOuvertureDate);
-            const statut = now >= nextOuverture ? 'ouvert' : 'programmé';
-            const dateMatch = getMatchDate(nextOuverture, config.matchJour, config.matchHeure);
-            await db.collection('groupes').doc(groupeDoc.id).collection('matchs_semaine').add({
-                dateMatch: dateMatch.toISOString(),
-                dateOuvertureInscription: nextOuverture.toISOString(),
-                maxJoueurs: config.maxJoueurs || 10,
-                statut,
-                confirmedCount: 0,
-                createdAt: now.toISOString()
-            });
+            // Vérifier si un doc correspond à cette config (même dateOuvertureInscription)
+            const alreadyExists = upcomingSnap.docs.some(d =>
+                d.data().dateOuvertureInscription === config.nextOuvertureDate
+            );
+
+            if (!alreadyExists) {
+                const nextOuverture = new Date(config.nextOuvertureDate);
+                const statut = now >= nextOuverture ? 'ouvert' : 'programmé';
+                const dateMatch = getMatchDate(nextOuverture, config.matchJour, config.matchHeure);
+                await db.collection('groupes').doc(groupeDoc.id).collection('matchs_semaine').add({
+                    dateMatch: dateMatch.toISOString(),
+                    dateOuvertureInscription: nextOuverture.toISOString(),
+                    maxJoueurs: config.maxJoueurs || 10,
+                    statut,
+                    confirmedCount: 0,
+                    createdAt: now.toISOString()
+                });
+            }
         }
-    }
+    } // fin for configs
+    } // fin for groupeDocs
 });
 
 // ========== TRIGGERED: Promotion liste d'attente après annulation ==========

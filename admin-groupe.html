@@ -99,7 +99,16 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Heure</label>
-                                <input type="time" id="creneau-heure" class="form-input" value="18:30">
+                                <div class="time-split">
+                                    <select id="creneau-heure-h" class="form-input time-select"></select>
+                                    <span class="time-sep">:</span>
+                                    <select id="creneau-heure-m" class="form-input time-select">
+                                        <option value="00">00</option>
+                                        <option value="15">15</option>
+                                        <option value="30" selected>30</option>
+                                        <option value="45">45</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="form-group" style="max-width:220px">
@@ -189,45 +198,55 @@
                     </form>
                 </div>
 
-                <!-- CONFIG HEBDO -->
+                <!-- CONFIG HEBDO MULTI -->
                 <div class="settings-card" style="margin-top:1.5rem">
-                    <h3>Match hebdomadaire récurrent</h3>
-                    <p class="page-subtitle" style="margin-bottom:1.25rem">Active l'ouverture automatique des inscriptions et la création des créneaux chaque semaine.</p>
-
-                    <div class="form-group">
-                        <label class="toggle-label">
-                            <input type="checkbox" id="config-recurring" class="toggle-checkbox">
-                            <span class="toggle-switch"></span>
-                            <span>Activer le créneau récurrent</span>
-                        </label>
+                    <div class="hebdo-section-header">
+                        <div>
+                            <h3>Créneaux récurrents</h3>
+                            <p class="page-subtitle">Un ou plusieurs créneaux hebdomadaires avec ouverture automatique des inscriptions.</p>
+                        </div>
+                        <button id="btn-show-add-hebdo" class="btn-action btn-primary btn-sm">+ Ajouter</button>
                     </div>
 
-                    <div id="config-hebdo-fields" class="hidden">
+                    <!-- Liste des créneaux existants -->
+                    <div id="hebdos-list" style="margin-top:1.25rem"></div>
+
+                    <!-- Formulaire d'ajout (caché par défaut) -->
+                    <div id="add-hebdo-form" class="hidden add-hebdo-form">
+                        <h4 style="margin-bottom:1rem;font-size:0.95rem;font-weight:700">Nouveau créneau récurrent</h4>
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label class="form-label">Jour du match</label>
-                                <select id="config-match-jour" class="form-input">
+                                <select id="new-match-jour" class="form-input">
                                     <option value="1">Lundi</option>
                                     <option value="2">Mardi</option>
                                     <option value="3">Mercredi</option>
                                     <option value="4">Jeudi</option>
-                                    <option value="5">Vendredi</option>
+                                    <option value="5" selected>Vendredi</option>
                                     <option value="6">Samedi</option>
                                     <option value="0">Dimanche</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Heure du match</label>
-                                <input type="time" id="config-match-heure" class="form-input" value="18:30">
+                                <div class="time-split">
+                                    <select id="new-match-heure-h" class="form-input time-select"></select>
+                                    <span class="time-sep">:</span>
+                                    <select id="new-match-heure-m" class="form-input time-select">
+                                        <option value="00">00</option>
+                                        <option value="15">15</option>
+                                        <option value="30" selected>30</option>
+                                        <option value="45">45</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-
                         <div class="form-row-2">
                             <div class="form-group">
-                                <label class="form-label">Ouverture des inscriptions</label>
-                                <select id="config-insc-jour" class="form-input">
+                                <label class="form-label">Jour d'ouverture des inscriptions</label>
+                                <select id="new-insc-jour" class="form-input">
                                     <option value="1">Lundi</option>
-                                    <option value="2">Mardi</option>
+                                    <option value="2" selected>Mardi</option>
                                     <option value="3">Mercredi</option>
                                     <option value="4">Jeudi</option>
                                     <option value="5">Vendredi</option>
@@ -237,15 +256,28 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Heure d'ouverture</label>
-                                <input type="time" id="config-insc-heure" class="form-input" value="09:00">
+                                <div class="time-split">
+                                    <select id="new-insc-heure-h" class="form-input time-select"></select>
+                                    <span class="time-sep">:</span>
+                                    <select id="new-insc-heure-m" class="form-input time-select">
+                                        <option value="00">00</option>
+                                        <option value="15">15</option>
+                                        <option value="30">30</option>
+                                        <option value="45">45</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-
-                        <div id="config-next-ouverture" class="config-next-label hidden"></div>
+                        <div class="form-group" style="max-width:220px">
+                            <label class="form-label">Max joueurs par match</label>
+                            <input type="number" id="new-max-joueurs" class="form-input" min="4" max="30" value="10">
+                        </div>
+                        <div id="add-hebdo-msg" class="form-msg hidden"></div>
+                        <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+                            <button id="btn-save-new-hebdo" class="btn-action btn-primary">Ajouter ce créneau</button>
+                            <button id="btn-cancel-add-hebdo" class="btn-action btn-ghost">Annuler</button>
+                        </div>
                     </div>
-
-                    <div id="config-hebdo-msg" class="form-msg hidden"></div>
-                    <button id="btn-save-hebdo" class="btn-action btn-primary" style="margin-top:1rem">Enregistrer la config hebdo</button>
                 </div>
             </div>
 
@@ -266,7 +298,7 @@
 
     <script type="module">
         import { requireAuth } from './js/auth.js';
-        import { db, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, addDoc, writeBatch, increment, query, where, COLLECTIONS } from './js/firebase-config.js';
+        import { db, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, addDoc, writeBatch, increment, query, where, deleteField, COLLECTIONS } from './js/firebase-config.js';
         import { calculerChangementsMatch } from './js/rating-system.js';
 
         const params = new URLSearchParams(window.location.search);
@@ -298,8 +330,8 @@
             document.getElementById('s-nom').value = groupe.nom;
             document.getElementById('s-max').value = groupe.maxJoueursMatch || 10;
 
-            // Pré-remplir config hebdo
-            prefillConfigHebdo(groupe.configHebdo);
+            // Charger les créneaux récurrents
+            renderConfigHebdos(groupe.configHebdos || {});
 
             // Pré-remplir le formulaire créneau manuel
             const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -313,26 +345,156 @@
             await loadMembres();
         }
 
-        function prefillConfigHebdo(cfg) {
-            if (!cfg) return;
-            document.getElementById('config-recurring').checked = cfg.recurring || false;
-            if (cfg.recurring) {
-                document.getElementById('config-hebdo-fields').classList.remove('hidden');
+        // ========== CONFIG HEBDO MULTI ==========
+        let configHebdos = {};
+
+        function renderConfigHebdos(hebdos) {
+            configHebdos = hebdos || {};
+            const container = document.getElementById('hebdos-list');
+            const entries = Object.entries(configHebdos);
+            const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+            if (!entries.length) {
+                container.innerHTML = `<div class="empty-hebdo">Aucun créneau configuré. Cliquez sur "+ Ajouter" pour en créer un.</div>`;
+                return;
             }
-            if (cfg.matchJour !== undefined) document.getElementById('config-match-jour').value = cfg.matchJour;
-            if (cfg.matchHeure) document.getElementById('config-match-heure').value = cfg.matchHeure;
-            if (cfg.inscriptionJour !== undefined) document.getElementById('config-insc-jour').value = cfg.inscriptionJour;
-            if (cfg.inscriptionHeure) document.getElementById('config-insc-heure').value = cfg.inscriptionHeure;
-            updateNextOuvertureLabel(cfg.nextOuvertureDate);
+
+            container.innerHTML = entries.map(([id, cfg]) => {
+                const nextDate = cfg.nextOuvertureDate
+                    ? new Date(cfg.nextOuvertureDate).toLocaleString('fr-FR', {
+                        weekday:'long', day:'numeric', month:'long',
+                        hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem'
+                    }) : null;
+                return `
+                <div class="hebdo-card ${cfg.actif ? 'hebdo-card-active' : 'hebdo-card-inactive'}">
+                    <div class="hebdo-card-info">
+                        <div class="hebdo-schedule-row">
+                            <span class="hebdo-chip">⚽ ${JOURS[cfg.matchJour] || '?'} ${cfg.matchHeure}</span>
+                            <span class="hebdo-chip hebdo-chip-open">🔓 ${JOURS[cfg.inscriptionJour] || '?'} ${cfg.inscriptionHeure}</span>
+                            <span class="hebdo-chip hebdo-chip-max">👥 ${cfg.maxJoueurs || 10} joueurs</span>
+                        </div>
+                        ${cfg.actif && nextDate ? `<div class="hebdo-next-label">⏰ Prochaine ouverture : ${nextDate}</div>` : ''}
+                        ${!cfg.actif ? `<div class="hebdo-inactive-note">⏸ Créneau désactivé</div>` : ''}
+                    </div>
+                    <div class="hebdo-card-controls">
+                        <label class="toggle-label" title="${cfg.actif ? 'Désactiver' : 'Activer'}">
+                            <input type="checkbox" class="toggle-checkbox hebdo-toggle" ${cfg.actif ? 'checked' : ''} data-id="${id}">
+                            <span class="toggle-switch"></span>
+                        </label>
+                        <button class="btn-sm btn-danger hebdo-delete" data-id="${id}" title="Supprimer">🗑</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            container.querySelectorAll('.hebdo-toggle').forEach(cb => {
+                cb.addEventListener('change', () => toggleHebdo(cb.dataset.id, cb.checked));
+            });
+            container.querySelectorAll('.hebdo-delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteHebdo(btn.dataset.id));
+            });
         }
 
-        function updateNextOuvertureLabel(dateISO) {
-            const el = document.getElementById('config-next-ouverture');
-            if (!dateISO) { el.classList.add('hidden'); return; }
-            const d = new Date(dateISO);
-            const label = d.toLocaleString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem' });
-            el.textContent = `⏰ Prochaine ouverture : ${label}`;
-            el.classList.remove('hidden');
+        async function toggleHebdo(id, newActif) {
+            try {
+                const updates = { [`configHebdos.${id}.actif`]: newActif };
+                const remaining = { ...configHebdos, [id]: { ...configHebdos[id], actif: newActif } };
+                updates.configHebdoActif = Object.values(remaining).some(c => c.actif);
+                await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId), updates);
+                configHebdos[id].actif = newActif;
+                renderConfigHebdos(configHebdos);
+            } catch (err) {
+                console.error('Erreur toggle hebdo:', err);
+            }
+        }
+
+        async function deleteHebdo(id) {
+            if (!confirm('Supprimer ce créneau récurrent ?')) return;
+            try {
+                const remaining = { ...configHebdos };
+                delete remaining[id];
+                const hasActive = Object.values(remaining).some(c => c.actif);
+                const updates = {};
+                updates[`configHebdos.${id}`] = deleteField();
+                updates.configHebdoActif = hasActive;
+                await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId), updates);
+                delete configHebdos[id];
+                renderConfigHebdos(configHebdos);
+            } catch (err) {
+                console.error('Erreur suppression hebdo:', err);
+            }
+        }
+
+        async function addHebdo() {
+            const matchJour = parseInt(document.getElementById('new-match-jour').value);
+            const matchHeure = getTimeSelect('new-match-heure');
+            const inscriptionJour = parseInt(document.getElementById('new-insc-jour').value);
+            const inscriptionHeure = getTimeSelect('new-insc-heure');
+            const maxJoueurs = parseInt(document.getElementById('new-max-joueurs').value) || groupe?.maxJoueursMatch || 10;
+            const msg = document.getElementById('add-hebdo-msg');
+            const btn = document.getElementById('btn-save-new-hebdo');
+
+            const nextOuvertureDate = calcNextOuverture(inscriptionJour, inscriptionHeure);
+            const id = Math.random().toString(36).slice(2, 10);
+
+            const newHebdo = {
+                actif: true,
+                matchJour, matchHeure,
+                inscriptionJour, inscriptionHeure,
+                maxJoueurs,
+                nextOuvertureDate: nextOuvertureDate.toISOString()
+            };
+
+            btn.disabled = true; btn.textContent = '...';
+            try {
+                const updates = {};
+                updates[`configHebdos.${id}`] = newHebdo;
+                updates.configHebdoActif = true;
+                await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId), updates);
+                groupe.configHebdos = { ...configHebdos, [id]: newHebdo };
+
+                // Pré-créer le doc matchs_semaine avec statut 'programmé'
+                await createProgrammeDoc(newHebdo, nextOuvertureDate);
+
+                configHebdos[id] = newHebdo;
+                renderConfigHebdos(configHebdos);
+                document.getElementById('add-hebdo-form').classList.add('hidden');
+                showMsg(document.getElementById('add-hebdo-msg'), 'Créneau ajouté ✓', 'success');
+            } catch (err) {
+                console.error('Erreur ajout hebdo:', err);
+                showMsg(msg, 'Erreur lors de l\'ajout.', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Ajouter ce créneau';
+            }
+        }
+
+        async function createProgrammeDoc(cfg, ouvertureDate) {
+            // Calculer la date du match (prochain `matchJour` après l'ouverture)
+            const [h, m] = cfg.matchHeure.split(':').map(Number);
+            const matchDate = new Date(ouvertureDate);
+            const luxonJour = cfg.matchJour === 0 ? 7 : cfg.matchJour;
+            const currentDay = matchDate.getDay() === 0 ? 7 : matchDate.getDay();
+            let daysUntil = (luxonJour - currentDay + 7) % 7 || 7;
+            matchDate.setDate(matchDate.getDate() + daysUntil);
+            matchDate.setHours(h, m, 0, 0);
+
+            // Supprimer les docs 'programmé' existants pour ce même créneau (par heure de match)
+            const oldSnap = await getDocs(query(
+                collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE),
+                where('statut', '==', 'programmé')
+            ));
+            for (const d of oldSnap.docs) {
+                const data = d.data();
+                if (data.dateMatch === matchDate.toISOString()) await deleteDoc(d.ref);
+            }
+
+            await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), {
+                dateMatch: matchDate.toISOString(),
+                dateOuvertureInscription: ouvertureDate.toISOString(),
+                maxJoueurs: cfg.maxJoueurs || 10,
+                statut: 'programmé',
+                confirmedCount: 0,
+                createdAt: new Date().toISOString()
+            });
         }
 
         async function loadMembres() {
@@ -491,103 +653,57 @@
             setTimeout(() => el.classList.add('hidden'), 3000);
         }
 
-        // ========== UTILITAIRE : arrondir à la tranche de 15 min la plus proche ==========
-        function snapTo15Min(timeStr) {
-            const [h, m] = timeStr.split(':').map(Number);
-            const rounded = Math.round(m / 15) * 15;
-            const finalM = rounded === 60 ? 0 : rounded;
-            const finalH = rounded === 60 ? (h + 1) % 24 : h;
-            return `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
+        // ========== UTILITAIRES SELECTS HEURE ==========
+        function buildHoursSelect(selectId, defaultHour = 9) {
+            const el = document.getElementById(selectId);
+            if (!el) return;
+            for (let h = 0; h < 24; h++) {
+                const opt = document.createElement('option');
+                opt.value = String(h).padStart(2, '0');
+                opt.textContent = String(h).padStart(2, '0');
+                if (h === defaultHour) opt.selected = true;
+                el.appendChild(opt);
+            }
         }
 
-        ['config-match-heure', 'config-insc-heure', 'creneau-heure'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('change', function() {
-                this.value = snapTo15Min(this.value);
-            });
-        });
+        function getTimeSelect(prefix) {
+            const h = document.getElementById(`${prefix}-h`)?.value || '00';
+            const m = document.getElementById(`${prefix}-m`)?.value || '00';
+            return `${h}:${m}`;
+        }
 
-        // ========== CONFIG HEBDO ==========
-        document.getElementById('config-recurring').addEventListener('change', function() {
-            document.getElementById('config-hebdo-fields').classList.toggle('hidden', !this.checked);
-        });
-
-        document.getElementById('btn-save-hebdo').addEventListener('click', async () => {
-            const msg = document.getElementById('config-hebdo-msg');
-            const recurring = document.getElementById('config-recurring').checked;
-            const btn = document.getElementById('btn-save-hebdo');
-            btn.disabled = true; btn.textContent = '...';
-
-            try {
-                let configHebdo;
-
-                if (!recurring) {
-                    configHebdo = { actif: false, recurring: false };
-                } else {
-                    const matchJour = parseInt(document.getElementById('config-match-jour').value);
-                    const matchHeure = document.getElementById('config-match-heure').value;
-                    const inscriptionJour = parseInt(document.getElementById('config-insc-jour').value);
-                    const inscriptionHeure = document.getElementById('config-insc-heure').value;
-                    const maxJoueurs = parseInt(document.getElementById('s-max').value) || 10;
-
-                    // Calculer la prochaine date d'ouverture
-                    const nextOuvertureDate = calcNextOuverture(inscriptionJour, inscriptionHeure);
-
-                    configHebdo = {
-                        actif: true,
-                        recurring: true,
-                        matchJour, matchHeure,
-                        inscriptionJour, inscriptionHeure,
-                        maxJoueurs,
-                        nextOuvertureDate: nextOuvertureDate.toISOString()
-                    };
-
-                    updateNextOuvertureLabel(configHebdo.nextOuvertureDate);
-                }
-
-                await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId), { configHebdo });
-                groupe.configHebdo = configHebdo;
-
-                // Pré-créer le doc matchs_semaine avec statut 'programmé' pour que
-                // le timer client-side ouvre les inscriptions à l'heure exacte (zéro délai)
-                if (recurring) {
-                    // Supprimer les anciens docs 'programmé' s'il y en a
-                    const oldSnap = await getDocs(query(
-                        collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE),
-                        where('statut', '==', 'programmé')
-                    ));
-                    for (const d of oldSnap.docs) await deleteDoc(d.ref);
-
-                    // Calculer la date du match
-                    const ouvertureDate = new Date(configHebdo.nextOuvertureDate);
-                    const matchJour = configHebdo.matchJour;
-                    const [h, m] = configHebdo.matchHeure.split(':').map(Number);
-                    // Date du match : prochain `matchJour` après l'ouverture
-                    const matchDate = new Date(ouvertureDate);
-                    const luxonJour = matchJour === 0 ? 7 : matchJour;
-                    const currentDay = ouvertureDate.getDay() === 0 ? 7 : ouvertureDate.getDay();
-                    let daysUntil = (luxonJour - currentDay + 7) % 7 || 7;
-                    matchDate.setDate(matchDate.getDate() + daysUntil);
-                    matchDate.setHours(h, m, 0, 0);
-
-                    await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), {
-                        dateMatch: matchDate.toISOString(),
-                        dateOuvertureInscription: ouvertureDate.toISOString(),
-                        maxJoueurs: configHebdo.maxJoueurs || groupe.maxJoueursMatch || 10,
-                        statut: 'programmé',
-                        confirmedCount: 0,
-                        createdAt: new Date().toISOString()
-                    });
-                }
-
-                showMsg(msg, recurring ? 'Config hebdo enregistrée ✓' : 'Créneau récurrent désactivé.', 'success');
-            } catch (err) {
-                console.error(err);
-                showMsg(msg, 'Erreur lors de la sauvegarde.', 'error');
-            } finally {
-                btn.disabled = false; btn.textContent = 'Enregistrer la config hebdo';
+        function setTimeSelect(prefix, timeStr) {
+            if (!timeStr) return;
+            const [hStr, mStr] = timeStr.split(':');
+            const h = parseInt(hStr) || 0;
+            const m = parseInt(mStr) || 0;
+            const hEl = document.getElementById(`${prefix}-h`);
+            const mEl = document.getElementById(`${prefix}-m`);
+            if (hEl) hEl.value = String(h).padStart(2, '0');
+            if (mEl) {
+                const snapped = [0, 15, 30, 45].reduce((prev, cur) =>
+                    Math.abs(cur - m) < Math.abs(prev - m) ? cur : prev, 0);
+                mEl.value = String(snapped).padStart(2, '0');
             }
+        }
+
+        // Peupler les selects d'heures au chargement
+        buildHoursSelect('new-match-heure-h', 18);
+        buildHoursSelect('new-insc-heure-h', 9);
+        buildHoursSelect('creneau-heure-h', 18);
+
+        // ========== LISTENERS CONFIG HEBDO MULTI ==========
+        document.getElementById('btn-show-add-hebdo').addEventListener('click', () => {
+            document.getElementById('add-hebdo-form').classList.remove('hidden');
+            document.getElementById('btn-show-add-hebdo').classList.add('hidden');
         });
+
+        document.getElementById('btn-cancel-add-hebdo').addEventListener('click', () => {
+            document.getElementById('add-hebdo-form').classList.add('hidden');
+            document.getElementById('btn-show-add-hebdo').classList.remove('hidden');
+        });
+
+        document.getElementById('btn-save-new-hebdo').addEventListener('click', addHebdo);
 
         function calcNextOuverture(inscriptionJour, inscriptionHeure) {
             const [h, m] = inscriptionHeure.split(':').map(Number);
@@ -735,7 +851,7 @@
 
         document.getElementById('btn-creer-creneau').addEventListener('click', async () => {
             const date = document.getElementById('creneau-date').value;
-            const heure = document.getElementById('creneau-heure').value;
+            const heure = getTimeSelect('creneau-heure');
             const max = parseInt(document.getElementById('creneau-max').value) || groupe?.maxJoueursMatch || 10;
             const msg = document.getElementById('creneau-msg');
             const btn = document.getElementById('btn-creer-creneau');

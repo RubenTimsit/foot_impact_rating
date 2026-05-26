@@ -14,7 +14,7 @@ const firebaseConfig = {
 // ==================== INITIALISATION ====================
 // Import des modules Firebase nécessaires
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, setDoc, doc, query, where, orderBy, deleteDoc, serverTimestamp, writeBatch, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, setDoc, doc, query, where, orderBy, deleteDoc, serverTimestamp, writeBatch, increment, runTransaction, deleteField } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 // Initialiser Firebase
@@ -41,6 +41,7 @@ export {
     writeBatch,
     increment,
     runTransaction,
+    deleteField,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,

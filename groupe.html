@@ -290,12 +290,14 @@
                     renderProchainMatch(match, monInscription);
                     return;
                 }
-                const h = Math.floor(msLeft / 3600000);
+                const d = Math.floor(msLeft / 86400000);
+                const h = Math.floor((msLeft % 86400000) / 3600000);
                 const m = Math.floor((msLeft % 3600000) / 60000);
                 const s = Math.floor((msLeft % 60000) / 1000);
                 const parts = [];
-                if (h > 0) parts.push(`${h}h`);
-                if (m > 0 || h > 0) parts.push(`${String(m).padStart(2,'0')}min`);
+                if (d > 0) parts.push(`${d}j`);
+                if (h > 0 || d > 0) parts.push(`${h}h`);
+                if (m > 0 || h > 0 || d > 0) parts.push(`${String(m).padStart(2,'0')}min`);
                 parts.push(`${String(s).padStart(2,'0')}s`);
                 const cdEl = document.getElementById('pm-countdown-value');
                 if (cdEl) cdEl.textContent = parts.join(' ');
