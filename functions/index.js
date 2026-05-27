@@ -1,5 +1,5 @@
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { onDocumentDeleted } = require('firebase-functions/v2/firestore');
+const { onDocumentDeleted, onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { DateTime } = require('luxon');
 
@@ -144,7 +144,112 @@ exports.processMatchSemaine = onSchedule({
             }
         }
     } // fin for configs
+        // 4. Fermer les votes expirés (24h après le match) pour ce groupe
+        const expiredVotesSnap = await db.collection('groupes').doc(groupeDoc.id)
+            .collection('matchs')
+            .where('voteClos', '==', false)
+            .get();
+
+        for (const matchDoc of expiredVotesSnap.docs) {
+            const md = matchDoc.data();
+            if (md.statut !== 'joue' || !md.dateVoteFermeture) continue;
+            if (now >= new Date(md.dateVoteFermeture)) {
+                try {
+                    await closeVotesAndUpdateTrophies(groupeDoc.id, matchDoc.id, md);
+                } catch (e) {
+                    console.error(`Erreur fermeture vote ${matchDoc.id}:`, e);
+                }
+            }
+        }
+
     } // fin for groupeDocs
+});
+
+// ========== UTILITAIRE: Calcul et fermeture des votes ==========
+async function closeVotesAndUpdateTrophies(groupeId, matchId, matchData) {
+    const matchRef = db.collection('groupes').doc(groupeId).collection('matchs').doc(matchId);
+
+    // Lire les votes EN DEHORS de la transaction (pas possible à l'intérieur)
+    const votesSnap = await matchRef.collection('votes').get();
+    const votes = votesSnap.docs.map(d => d.data());
+
+    // Calcul des points et compteurs de votes par position
+    const stats = {};
+    votes.forEach(v => {
+        if (v.top1) { stats[v.top1] = stats[v.top1] || { points: 0, top1: 0, top2: 0 }; stats[v.top1].points += 3; stats[v.top1].top1++; }
+        if (v.top2) { stats[v.top2] = stats[v.top2] || { points: 0, top1: 0, top2: 0 }; stats[v.top2].points += 2; stats[v.top2].top2++; }
+        if (v.top3) { stats[v.top3] = stats[v.top3] || { points: 0, top1: 0, top2: 0 }; stats[v.top3].points += 1; }
+    });
+
+    // Tri avec départage : points → top1 → top2 → ex-aequo
+    const sorted = Object.entries(stats).sort(([, a], [, b]) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.top1 !== a.top1) return b.top1 - a.top1;
+        return b.top2 - a.top2;
+    });
+
+    // Assigner les rangs en gérant les ex-aequo
+    const topJoueurs = [];
+    let currentRank = 1;
+    for (let i = 0; i < sorted.length; i++) {
+        if (i > 0) {
+            const [, prev] = sorted[i - 1];
+            const [, curr] = sorted[i];
+            const isAequo = curr.points === prev.points && curr.top1 === prev.top1 && curr.top2 === prev.top2;
+            if (!isAequo) currentRank = topJoueurs.length + 1;
+        }
+        if (currentRank > 3) break;
+        topJoueurs.push({ uid: sorted[i][0], points: sorted[i][1].points, rang: currentRank });
+    }
+
+    // Transaction atomique : seule l'instance qui bascule voteClos false→true
+    // met à jour les trophées. Si une autre CF a déjà fermé, on s'arrête.
+    let weClosedIt = false;
+    await db.runTransaction(async (transaction) => {
+        weClosedIt = false; // reset à chaque retry de la transaction
+        const snap = await transaction.get(matchRef);
+        if (!snap.exists || snap.data().voteClos) return; // Déjà fermé → rien à faire
+        transaction.update(matchRef, { voteClos: true, topJoueurs });
+        weClosedIt = true;
+    });
+
+    // Incrémenter les trophées UNIQUEMENT si c'est nous qui avons fermé le vote
+    if (!weClosedIt) return;
+
+    const batch = db.batch();
+    const tropheeKeys = ['or', 'argent', 'bronze'];
+    for (const top of topJoueurs) {
+        const key = tropheeKeys[top.rang - 1];
+        if (key) {
+            const joueurRef = db.collection('groupes').doc(groupeId)
+                .collection('joueurs').doc(top.uid);
+            batch.update(joueurRef, {
+                [`trophees.${key}`]: admin.firestore.FieldValue.increment(1)
+            });
+        }
+    }
+    await batch.commit();
+}
+
+// ========== TRIGGERED: Fermeture automatique quand tous ont voté ==========
+exports.onVoteCreated = onDocumentCreated({
+    document: 'groupes/{groupeId}/matchs/{matchId}/votes/{votantId}',
+    region: REGION,
+}, async (event) => {
+    const { groupeId, matchId } = event.params;
+    const matchRef = db.collection('groupes').doc(groupeId).collection('matchs').doc(matchId);
+
+    const matchSnap = await matchRef.get();
+    if (!matchSnap.exists || matchSnap.data().voteClos) return;
+
+    const matchData = matchSnap.data();
+    const presentsCount = matchData.presentsCount || 0;
+    if (presentsCount === 0) return;
+
+    const votesSnap = await matchRef.collection('votes').get();
+    if (votesSnap.size >= presentsCount) {
+        await closeVotesAndUpdateTrophies(groupeId, matchId, matchData);
+    }
 });
 
 // ========== TRIGGERED: Promotion liste d'attente après annulation ==========
@@ -166,9 +271,16 @@ exports.onInscriptionDeleted = onDocumentDeleted({
         .get();
 
     if (!waitlistSnap.empty) {
-        const batch = db.batch();
-        batch.update(waitlistSnap.docs[0].ref, { statut: 'confirmé' });
-        batch.update(matchRef, { confirmedCount: admin.firestore.FieldValue.increment(1) });
-        await batch.commit();
+        const waiterRef = waitlistSnap.docs[0].ref;
+        // Transaction atomique : vérifie que le joueur est ENCORE en attente
+        // avant de le promouvoir. Deux CF concurrentes peuvent trouver le même
+        // joueur — seule la première transaction réussit, la seconde voit
+        // statut='confirmé' et abandonne (pas de double-promotion).
+        await db.runTransaction(async (transaction) => {
+            const waiterSnap = await transaction.get(waiterRef);
+            if (!waiterSnap.exists || waiterSnap.data().statut !== 'attente') return;
+            transaction.update(waiterRef, { statut: 'confirmé' });
+            transaction.update(matchRef, { confirmedCount: admin.firestore.FieldValue.increment(1) });
+        });
     }
 });

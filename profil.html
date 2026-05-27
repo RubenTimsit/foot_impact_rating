@@ -163,8 +163,8 @@
     </div>
 
     <script type="module">
-        import { requireAuth, getUserProfile, updateUserProfile, deconnecter, getUtilisateurActuel } from './js/auth.js';
-        import { db, collection, getDocs, addDoc, query, where, doc, setDoc, getDoc, COLLECTIONS } from './js/firebase-config.js';
+        import { requireAuth, getUserProfile, updateUserProfile, deconnecter } from './js/auth.js';
+        import { db, collection, getDocs, addDoc, query, where, doc, setDoc, getDoc, COLLECTIONS, escapeHtml } from './js/firebase-config.js';
 
         let currentUser = null;
         let userProfile = null;
@@ -254,19 +254,25 @@
             btn.disabled = true;
             btn.textContent = '...';
 
-            await updateUserProfile(currentUser.uid, {
-                displayName: prenom,
-                position,
-                profilMilieu: profilMilieu || null,
-                profilComplet: true
-            });
+            try {
+                await updateUserProfile(currentUser.uid, {
+                    displayName: prenom,
+                    position,
+                    profilMilieu: profilMilieu || null,
+                    profilComplet: true
+                });
 
-            userProfile = await getUserProfile(currentUser.uid);
-            renderProfil();
-            document.getElementById('complete-banner').classList.add('hidden');
-            showFormMsg('Profil enregistré !', 'success');
-            btn.disabled = false;
-            btn.textContent = 'Enregistrer';
+                userProfile = await getUserProfile(currentUser.uid);
+                renderProfil();
+                document.getElementById('complete-banner').classList.add('hidden');
+                showFormMsg('Profil enregistré !', 'success');
+            } catch (err) {
+                console.error('Erreur sauvegarde profil:', err);
+                showFormMsg('Erreur lors de la sauvegarde. Vérifie ta connexion et réessaye.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Enregistrer';
+            }
         });
 
         function showFormMsg(text, type) {
@@ -308,19 +314,29 @@
                 }
             } catch (err) {
                 console.error('Erreur chargement groupes:', err);
+                list.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:1rem">Impossible de charger tes groupes. Vérifie ta connexion et recharge la page.</p>`;
             }
         }
 
         function renderGroupeCard(groupe) {
             const isAdmin = groupe.adminId === currentUser.uid;
             const statut = groupe.membre?.statut || 'pending';
+            const t = groupe.membre?.trophees || {};
+            const tropheeParts = [];
+            if (t.or > 0) tropheeParts.push(`<span class="gc-trophy gc-trophy-or">🥇 ×${t.or}</span>`);
+            if (t.argent > 0) tropheeParts.push(`<span class="gc-trophy gc-trophy-argent">🥈 ×${t.argent}</span>`);
+            if (t.bronze > 0) tropheeParts.push(`<span class="gc-trophy gc-trophy-bronze">🥉 ×${t.bronze}</span>`);
+            const tropheesRow = tropheeParts.length
+                ? `<div class="gc-trophees">${tropheeParts.join('')}</div>`
+                : '';
+
             const card = document.createElement('div');
             card.className = 'group-card';
             card.innerHTML = `
                 <div class="gc-header">
                     <div>
-                        <h3 class="gc-nom">${groupe.nom}</h3>
-                        <span class="gc-code">Code : ${groupe.code}</span>
+                        <h3 class="gc-nom">${escapeHtml(groupe.nom)}</h3>
+                        <span class="gc-code">Code : ${escapeHtml(groupe.code)}</span>
                     </div>
                     <div class="gc-badges">
                         ${isAdmin ? '<span class="badge badge-admin">Admin</span>' : ''}
@@ -331,6 +347,7 @@
                     <span>⚽ Max ${groupe.maxJoueursMatch || '?'} joueurs/match</span>
                 </div>
                 ${statut === 'active' ? `
+                ${tropheesRow}
                 <div id="gc-nm-${groupe.id}" class="gc-next-match">
                     <div class="gc-nm-skeleton"></div>
                 </div>

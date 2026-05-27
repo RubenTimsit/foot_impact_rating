@@ -1,22 +1,36 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "functions": {
     "source": "functions"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    }
   },
   "hosting": {
     "public": ".",
     "ignore": [
       "firebase.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      ".firebaserc",
       "**/.*",
       "**/node_modules/**",
-      "ROADMAP.md",
-      "README*.md",
+      "functions",
+      "functions/**",
       "*.md",
       "deploy.bat",
       "deploy.sh",
-      "firestore.rules"
+      "setup-groupes.html",
+      "js/admin.js"
     ],
     "cleanUrls": true,
     "trailingSlash": false

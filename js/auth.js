@@ -5,8 +5,10 @@ import {
     GoogleAuthProvider, signInWithPopup,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
     signOut, onAuthStateChanged,
-    doc, getDoc, setDoc, serverTimestamp
+    doc, getDoc, setDoc
 } from './firebase-config.js';
+
+import { sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 // Le statut super admin est stocké dans Firestore (collection 'admins/{uid}')
 // Pour l'activer : Firebase Console → Firestore → collection 'admins' → document '{ton_uid}' → champ superAdmin: true
@@ -23,6 +25,7 @@ export async function connecterAvecGoogle() {
 
 export async function connecterAvecEmail(email, password) {
     const result = await signInWithEmailAndPassword(auth, email, password);
+    await syncUserProfile(result.user);
     return result.user;
 }
 
@@ -35,6 +38,10 @@ export async function inscrireAvecEmail(email, password, displayName) {
 export async function deconnecter() {
     await signOut(auth);
     window.location.href = 'index.html';
+}
+
+export async function envoyerReinitialisationMdp(email) {
+    await sendPasswordResetEmail(auth, email);
 }
 
 // ==================== PROFIL FIRESTORE ====================

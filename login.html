@@ -89,7 +89,13 @@
                         <span id="btn-text">Se connecter</span>
                         <span id="btn-loader" class="btn-loader hidden"></span>
                     </button>
+
+                    <div id="forgot-wrap" class="login-only" style="text-align:center;margin-top:.75rem">
+                        <button type="button" id="btn-forgot" class="btn-link">Mot de passe oublié ?</button>
+                    </div>
                 </form>
+
+                <div id="forgot-msg" class="auth-error hidden" style="margin-top:.5rem"></div>
 
                 <p class="auth-footer-text">
                     En continuant, tu acceptes les règles du groupe. ⚽
@@ -100,7 +106,7 @@
     </div>
 
     <script type="module">
-        import { connecterAvecGoogle, connecterAvecEmail, inscrireAvecEmail, requireGuest, isSuperAdmin } from './js/auth.js';
+        import { connecterAvecGoogle, connecterAvecEmail, inscrireAvecEmail, requireGuest, isSuperAdmin, envoyerReinitialisationMdp } from './js/auth.js';
 
         // Redirige si déjà connecté
         requireGuest();
@@ -119,9 +125,11 @@
             tabLogin.classList.toggle('active', mode === 'login');
             tabRegister.classList.toggle('active', mode === 'register');
             registerOnlyFields.forEach(el => el.classList.toggle('hidden', mode === 'login'));
+            document.querySelectorAll('.login-only').forEach(el => el.classList.toggle('hidden', mode !== 'login'));
             btnText.textContent = mode === 'login' ? 'Se connecter' : "Créer mon compte";
             passwordInput.setAttribute('autocomplete', mode === 'login' ? 'current-password' : 'new-password');
             clearError();
+            document.getElementById('forgot-msg').classList.add('hidden');
         }
 
         tabLogin.addEventListener('click', () => activerOnglet('login'));
@@ -177,6 +185,28 @@
             };
             return messages[code] || 'Une erreur est survenue. Réessaye.';
         }
+
+        // ========== MOT DE PASSE OUBLIÉ ==========
+        document.getElementById('btn-forgot').addEventListener('click', async () => {
+            const email = document.getElementById('input-email').value.trim();
+            const msgEl = document.getElementById('forgot-msg');
+            msgEl.classList.remove('hidden');
+            if (!email) {
+                msgEl.style.color = 'var(--error, #ef4444)';
+                msgEl.textContent = 'Entre ton email ci-dessus, puis clique ici.';
+                return;
+            }
+            msgEl.style.color = 'var(--text-muted, #888)';
+            msgEl.textContent = '⏳ Envoi en cours…';
+            try {
+                await envoyerReinitialisationMdp(email);
+                msgEl.style.color = 'var(--success, #22c55e)';
+                msgEl.textContent = '✅ Email envoyé ! Vérifie ta boîte mail (et les spams).';
+            } catch (err) {
+                msgEl.style.color = 'var(--error, #ef4444)';
+                msgEl.textContent = parseFirebaseError(err.code);
+            }
+        });
 
         // ========== GOOGLE ==========
         document.getElementById('btn-google').addEventListener('click', async () => {

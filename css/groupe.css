@@ -939,6 +939,90 @@ body {
 .pm-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem; }
 .btn-sm-insc { font-size: 0.85rem; padding: 0.5rem 1rem; }
 
+/* ==================== VOTE MAN OF THE MATCH ==================== */
+.vote-section {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+.vote-section-left { display: flex; flex-direction: column; gap: 0.25rem; }
+.vote-open-badge {
+    font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: #a78bfa;
+}
+.vote-counter { font-size: 0.8rem; color: var(--text-muted); }
+.vote-done-badge {
+    font-size: 0.82rem; font-weight: 600; color: var(--green);
+    background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.3);
+    padding: 0.3rem 0.75rem; border-radius: 20px;
+}
+.vote-absent-badge {
+    font-size: 0.78rem; color: var(--text-muted);
+    background: var(--dark-3); border: 1px solid var(--border);
+    padding: 0.3rem 0.75rem; border-radius: 20px;
+}
+.vote-pending-badge {
+    font-size: 0.82rem; color: var(--text-muted); font-style: italic;
+}
+.vote-btn { white-space: nowrap; }
+
+.vote-section-closed {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(251,191,36,0.05) 0%, var(--dark-2) 80%);
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+.vote-results-title {
+    font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #fbbf24; margin-bottom: 0.75rem;
+}
+.vote-podium {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+}
+.vote-podium-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--dark-3); border-radius: 8px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.88rem; font-weight: 500;
+}
+.vote-medal { font-size: 1.1rem; }
+.vote-podium-name { color: var(--light); }
+.vote-pts { font-size: 0.75rem; color: var(--text-muted); margin-left: 0.25rem; }
+.vote-no-result { font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
+
+/* ==================== MODAL VOTE ==================== */
+.vote-modal { max-width: 480px; }
+.vote-modal-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 1.25rem; }
+.vote-form { display: flex; flex-direction: column; gap: 0.85rem; }
+.vote-row { display: flex; align-items: center; gap: 1rem; }
+.vote-rank-label {
+    font-size: 1rem; font-weight: 700; min-width: 90px;
+    display: flex; align-items: center; gap: 0.4rem;
+}
+.gold-label { color: #fbbf24; }
+.silver-label { color: #94a3b8; }
+.bronze-label { color: #cd7c4b; }
+.vote-select { flex: 1; }
+
+/* ==================== TROPHÉES — CLASSEMENT ==================== */
+.player-cell { display: flex; flex-direction: column; gap: 0.2rem; }
+.player-trophees { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.1rem; }
+.trophy-mini {
+    font-size: 0.72rem; font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    background: var(--dark-3);
+    white-space: nowrap;
+}
+.trophy-or { color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+.trophy-argent { color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+.trophy-bronze { color: #cd7c4b; border: 1px solid rgba(205,124,75,0.3); }
+.vote-part-cell { color: var(--text-muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
 /* ==================== UTILITY ==================== */
 .hidden { display: none !important; }
 

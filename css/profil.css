@@ -554,6 +554,27 @@ body {
     margin-top: 1.25rem;
 }
 
+/* ==================== TROPHÉES — CARDS DE GROUPE ==================== */
+.gc-trophees {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem 0;
+}
+.gc-trophy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    background: var(--dark-3);
+}
+.gc-trophy-or { color: #fbbf24; border: 1px solid rgba(251,191,36,0.35); }
+.gc-trophy-argent { color: #94a3b8; border: 1px solid rgba(148,163,184,0.35); }
+.gc-trophy-bronze { color: #cd7c4b; border: 1px solid rgba(205,124,75,0.35); }
+
 /* ==================== UTILITY ==================== */
 .hidden { display: none !important; }
 

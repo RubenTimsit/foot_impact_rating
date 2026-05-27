@@ -57,6 +57,20 @@ export const COLLECTIONS = {
     MATCHS: 'matchs',
     SYNERGIES: 'synergies',
     MATCHS_SEMAINE: 'matchs_semaine',
-    INSCRIPTIONS: 'inscriptions'
+    INSCRIPTIONS: 'inscriptions',
+    VOTES: 'votes'
 };
+
+// ==================== UTILITAIRES ====================
+// Échappe les caractères HTML dangereux avant insertion via innerHTML.
+// À utiliser sur toute donnée saisie par l'utilisateur (displayName, nom de groupe, email, code, etc.).
+export function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 

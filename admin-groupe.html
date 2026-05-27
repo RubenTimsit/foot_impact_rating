@@ -297,8 +297,8 @@
     </div>
 
     <script type="module">
-        import { requireAuth } from './js/auth.js';
-        import { db, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, addDoc, writeBatch, increment, query, where, deleteField, COLLECTIONS } from './js/firebase-config.js';
+        import { requireAuth, isSuperAdmin } from './js/auth.js';
+        import { db, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, addDoc, writeBatch, increment, query, where, deleteField, COLLECTIONS, escapeHtml, runTransaction } from './js/firebase-config.js';
         import { calculerChangementsMatch } from './js/rating-system.js';
 
         const params = new URLSearchParams(window.location.search);
@@ -314,11 +314,23 @@
 
             // Charger le groupe
             const snap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId));
-            if (!snap.exists() || snap.data().adminId !== currentUser.uid) {
+            if (!snap.exists()) { window.location.href = 'profil.html'; return; }
+
+            const isAdmin = snap.data().adminId === currentUser.uid;
+            const isSA = await isSuperAdmin(currentUser.uid);
+            if (!isAdmin && !isSA) {
                 window.location.href = 'profil.html';
                 return;
             }
             groupe = { id: snap.id, ...snap.data() };
+
+            // Bandeau d'avertissement pour le super admin qui accède à un groupe étranger
+            if (isSA && !isAdmin) {
+                const banner = document.createElement('div');
+                banner.style.cssText = 'background:#7c3aed;color:#fff;text-align:center;padding:.5rem 1rem;font-size:.85rem;position:sticky;top:0;z-index:999';
+                banner.textContent = `👑 Mode super admin — groupe "${snap.data().nom}"`;
+                document.body.prepend(banner);
+            }
 
             // Rendre la nav
             document.getElementById('nav-groupe-nom').textContent = groupe.nom;
@@ -518,9 +530,6 @@
             renderPending(pending);
             renderMembres(actifs);
             membresActifsCache = actifs;
-            if (document.getElementById('tab-matchs') && !document.getElementById('tab-matchs').classList.contains('hidden')) {
-                buildMatchPlayersTable(actifs);
-            }
         }
 
         // ========== EN ATTENTE ==========
@@ -531,7 +540,7 @@
                     <div class="empty-state">
                         <div class="empty-icon">✅</div>
                         <h3>Aucune demande en attente</h3>
-                        <p>Partage le code <strong>${groupe.code}</strong> pour inviter des joueurs.</p>
+                        <p>Partage le code <strong>${escapeHtml(groupe.code)}</strong> pour inviter des joueurs.</p>
                     </div>`;
                 return;
             }
@@ -539,18 +548,18 @@
             container.innerHTML = `
                 <div class="pending-grid">
                     ${pending.map(m => `
-                        <div class="pending-card" data-id="${m.id}">
+                        <div class="pending-card" data-id="${escapeHtml(m.id)}">
                             <div class="pending-info">
-                                <div class="pending-avatar">${(m.displayName || '?').slice(0,2).toUpperCase()}</div>
+                                <div class="pending-avatar">${escapeHtml((m.displayName || '?').slice(0,2).toUpperCase())}</div>
                                 <div>
-                                    <div class="pending-name">${m.displayName || 'Inconnu'}</div>
-                                    <span class="pos-badge ${(m.position || '').toLowerCase()}">${m.position || '—'}</span>
-                                    ${m.profilMilieu ? `<span class="profil-milieu">${m.profilMilieu}</span>` : ''}
+                                    <div class="pending-name">${escapeHtml(m.displayName) || 'Inconnu'}</div>
+                                    <span class="pos-badge ${escapeHtml((m.position || '').toLowerCase())}">${escapeHtml(m.position) || '—'}</span>
+                                    ${m.profilMilieu ? `<span class="profil-milieu">${escapeHtml(m.profilMilieu)}</span>` : ''}
                                 </div>
                             </div>
                             <div class="pending-actions">
-                                <button class="btn-action btn-primary btn-valider" data-id="${m.id}" data-nom="${m.displayName}">✓ Valider</button>
-                                <button class="btn-action btn-danger btn-refuser" data-id="${m.id}" data-nom="${m.displayName}">✕ Refuser</button>
+                                <button class="btn-action btn-primary btn-valider" data-id="${escapeHtml(m.id)}" data-nom="${escapeHtml(m.displayName || '')}">✓ Valider</button>
+                                <button class="btn-action btn-danger btn-refuser" data-id="${escapeHtml(m.id)}" data-nom="${escapeHtml(m.displayName || '')}">✕ Refuser</button>
                             </div>
                         </div>
                     `).join('')}
@@ -576,13 +585,13 @@
             tbody.innerHTML = sorted.map((m, i) => `
                 <tr>
                     <td class="rank">${i + 1}</td>
-                    <td><strong>${m.displayName || '—'}</strong></td>
-                    <td><span class="pos-badge ${(m.position || '').toLowerCase()}">${m.position || '—'}</span></td>
+                    <td><strong>${escapeHtml(m.displayName) || '—'}</strong></td>
+                    <td><span class="pos-badge ${escapeHtml((m.position || '').toLowerCase())}">${escapeHtml(m.position) || '—'}</span></td>
                     <td class="rating">${m.impactRating || 1000}</td>
                     <td>${m.matchsJoues || 0}</td>
                     <td class="vnd">${m.victoires || 0}V ${m.nuls || 0}N ${m.defaites || 0}D</td>
                     <td>
-                        ${m.id !== currentUser.uid ? `<button class="btn-sm btn-danger btn-expulser" data-id="${m.id}" data-nom="${m.displayName}">Exclure</button>` : '<span class="you-badge">Toi</span>'}
+                        ${m.id !== currentUser.uid ? `<button class="btn-sm btn-danger btn-expulser" data-id="${escapeHtml(m.id)}" data-nom="${escapeHtml(m.displayName || '')}">Exclure</button>` : '<span class="you-badge">Toi</span>'}
                     </td>
                 </tr>
             `).join('');
@@ -746,8 +755,10 @@
             const container = document.getElementById('inscriptions-admin-content');
             try {
                 const snap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE));
+                const now = new Date();
                 const matchs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .filter(m => m.statut === 'ouvert')
+                    .filter(m => m.statut === 'ouvert' ||
+                        (m.statut === 'programmé' && m.dateOuvertureInscription && now >= new Date(m.dateOuvertureInscription)))
                     .sort((a, b) => new Date(a.dateMatch) - new Date(b.dateMatch));
 
                 if (!matchs.length) {
@@ -782,8 +793,8 @@
                             ${confirmes.length ? `<div class="insc-list">${confirmes.map((p, i) => `
                                 <div class="insc-row">
                                     <span class="insc-num">${i+1}</span>
-                                    <span class="insc-name">${p.displayName}</span>
-                                    <span class="pos-badge ${(p.position||'').toLowerCase()}">${p.position||'—'}</span>
+                                    <span class="insc-name">${escapeHtml(p.displayName)}</span>
+                                    <span class="pos-badge ${escapeHtml((p.position||'').toLowerCase())}">${escapeHtml(p.position)||'—'}</span>
                                 </div>`).join('')}</div>` : '<p class="insc-empty">Aucun joueur inscrit</p>'}
                         </div>
                         <div>
@@ -791,8 +802,8 @@
                             ${attente.length ? `<div class="insc-list">${attente.map((p, i) => `
                                 <div class="insc-row insc-row-wait">
                                     <span class="insc-num">${i+1}</span>
-                                    <span class="insc-name">${p.displayName}</span>
-                                    <span class="pos-badge ${(p.position||'').toLowerCase()}">${p.position||'—'}</span>
+                                    <span class="insc-name">${escapeHtml(p.displayName)}</span>
+                                    <span class="pos-badge ${escapeHtml((p.position||'').toLowerCase())}">${escapeHtml(p.position)||'—'}</span>
                                 </div>`).join('')}</div>` : '<p class="insc-empty">Personne en attente</p>'}
                         </div>
                     </div>
@@ -803,8 +814,16 @@
                     ` : ''}
                 `;
 
-                document.getElementById('btn-generer-equipes')?.addEventListener('click', () => {
-                    genererEquipes(confirmes);
+                document.getElementById('btn-generer-equipes')?.addEventListener('click', async () => {
+                    const btn = document.getElementById('btn-generer-equipes');
+                    btn.disabled = true;
+                    btn.textContent = '⏳ Calcul…';
+                    try {
+                        await genererEquipes(confirmes);
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = '🎲 Régénérer les équipes';
+                    }
                 });
 
             } catch (err) {
@@ -813,30 +832,76 @@
             }
         }
 
-        function genererEquipes(joueurs) {
-            // Enrichir avec le rating actuel depuis la sous-collection joueurs (Option B)
+        async function genererEquipes(joueurs) {
+            // 1. Charger les synergies pour optimiser la répartition
+            let synergiesMap = {};
+            try {
+                const synSnap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.SYNERGIES));
+                synSnap.docs.forEach(d => { synergiesMap[d.id] = d.data().valeur || 0; });
+            } catch (_) {}
+
+            const synPair = (u1, u2) => synergiesMap[[u1, u2].sort().join('-')] || 0;
+            const teamRating = eq => eq.reduce((s, j) => s + (j.impactRating || 1000), 0);
+            const teamSyn = eq => {
+                let s = 0;
+                for (let i = 0; i < eq.length; i++)
+                    for (let j = i + 1; j < eq.length; j++)
+                        s += synPair(eq[i].id || eq[i].uid, eq[j].id || eq[j].uid);
+                return s;
+            };
+            // Score de la répartition : différence de rating (poids x10) + déséquilibre synergie
+            const splitScore = (a, b) =>
+                Math.abs(teamRating(a) - teamRating(b)) * 10 +
+                Math.abs(teamSyn(a) - teamSyn(b));
+
+            // 2. Snake draft initial sur le rating (base équilibrée)
             const enriched = joueurs.map(j => {
                 const membre = membresActifsCache.find(m => m.id === (j.uid || j.id));
                 return { ...j, impactRating: membre?.impactRating ?? 1000 };
             });
             const sorted = [...enriched].sort((a, b) => (b.impactRating || 1000) - (a.impactRating || 1000));
-            const equipeA = [], equipeB = [];
+            let equipeA = [], equipeB = [];
             sorted.forEach((j, i) => {
-                // Snake draft : A B B A A B B A ...
                 const cycle = Math.floor(i / 2);
-                const posInCycle = i % 2;
-                const goesToA = cycle % 2 === 0 ? posInCycle === 0 : posInCycle === 1;
+                const goesToA = cycle % 2 === 0 ? i % 2 === 0 : i % 2 === 1;
                 (goesToA ? equipeA : equipeB).push(j);
             });
 
+            // 3. Optimisation par swaps successifs (prend en compte les synergies)
+            let improved = true;
+            while (improved) {
+                improved = false;
+                let bestScore = splitScore(equipeA, equipeB);
+                let bestSwap = null;
+                for (let i = 0; i < equipeA.length; i++) {
+                    for (let j = 0; j < equipeB.length; j++) {
+                        const nA = [...equipeA], nB = [...equipeB];
+                        [nA[i], nB[j]] = [nB[j], nA[i]];
+                        const sc = splitScore(nA, nB);
+                        if (sc < bestScore) { bestScore = sc; bestSwap = [i, j]; }
+                    }
+                }
+                if (bestSwap) {
+                    const [i, j] = bestSwap;
+                    [equipeA[i], equipeB[j]] = [equipeB[j], equipeA[i]];
+                    improved = true;
+                }
+            }
+
+            // 4. Affichage
+            const hasSyn = Object.keys(synergiesMap).length > 0;
+            const synLabel = hasSyn
+                ? `<p style="color:var(--text-muted);font-size:.8rem;margin-top:.5rem">⚡ Synergies prises en compte · Δrating: ${Math.abs(teamRating(equipeA) - teamRating(equipeB))}</p>`
+                : `<p style="color:var(--text-muted);font-size:.8rem;margin-top:.5rem">📊 Basé sur l'Impact Rating uniquement (pas encore de synergies)</p>`;
+
             const renderTeam = (equipe, label) => `
                 <div class="rating-team">
-                    <h4 class="${label === 'A' ? 'team-a-label' : 'team-b-label'}">Équipe ${label}</h4>
-                    ${equipe.map(j => `<div class="rating-change-row"><span>${j.displayName}</span><span class="pos-badge ${(j.position||'').toLowerCase()}">${j.position||'—'}</span><span style="color:var(--text-muted)">${j.impactRating||1000}</span></div>`).join('')}
+                    <h4 class="${label === 'A' ? 'team-a-label' : 'team-b-label'}">Équipe ${label} — rating moy. ${Math.round(teamRating(equipe) / equipe.length)}</h4>
+                    ${equipe.map(j => `<div class="rating-change-row"><span>${escapeHtml(j.displayName)}</span><span class="pos-badge ${escapeHtml((j.position||'').toLowerCase())}">${escapeHtml(j.position)||'—'}</span><span style="color:var(--text-muted)">${j.impactRating||1000}</span></div>`).join('')}
                 </div>`;
 
             const container = document.getElementById('equipes-generees');
-            container.innerHTML = `<div class="rating-changes">${renderTeam(equipeA, 'A')}${renderTeam(equipeB, 'B')}</div>`;
+            container.innerHTML = `<div class="rating-changes">${renderTeam(equipeA, 'A')}${renderTeam(equipeB, 'B')}</div>${synLabel}`;
             container.classList.remove('hidden');
         }
 
@@ -886,10 +951,16 @@
         });
 
         // ========== COPIER CODE ==========
-        document.getElementById('btn-copy-code').addEventListener('click', () => {
-            navigator.clipboard.writeText(groupe.code);
-            document.getElementById('btn-copy-code').textContent = '✅';
-            setTimeout(() => document.getElementById('btn-copy-code').textContent = '📋', 2000);
+        document.getElementById('btn-copy-code').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-copy-code');
+            try {
+                await navigator.clipboard.writeText(groupe.code);
+                btn.textContent = '✅';
+                setTimeout(() => btn.textContent = '📋', 2000);
+            } catch (_) {
+                // Fallback si clipboard refusé (permissions ou contexte non sécurisé)
+                window.prompt('Copie ce code pour inviter des joueurs :', groupe.code);
+            }
         });
 
         // ========== TABS ==========
@@ -914,17 +985,17 @@
                 return;
             }
             tbody.innerHTML = membres.map(m => `
-                <tr data-uid="${m.id}">
-                    <td><strong>${m.displayName || '—'}</strong></td>
-                    <td><span class="pos-badge ${(m.position||'').toLowerCase()}">${m.position||'—'}</span></td>
+                <tr data-uid="${escapeHtml(m.id)}">
+                    <td><strong>${escapeHtml(m.displayName) || '—'}</strong></td>
+                    <td><span class="pos-badge ${escapeHtml((m.position||'').toLowerCase())}">${escapeHtml(m.position)||'—'}</span></td>
                     <td class="team-col"><label class="team-radio team-a-radio">
-                        <input type="radio" name="team-${m.id}" value="A">
+                        <input type="radio" name="team-${escapeHtml(m.id)}" value="A">
                     </label></td>
                     <td class="team-col"><label class="team-radio team-b-radio">
-                        <input type="radio" name="team-${m.id}" value="B">
+                        <input type="radio" name="team-${escapeHtml(m.id)}" value="B">
                     </label></td>
                     <td><label class="team-radio">
-                        <input type="radio" name="team-${m.id}" value="absent" checked>
+                        <input type="radio" name="team-${escapeHtml(m.id)}" value="absent" checked>
                     </label></td>
                 </tr>
             `).join('');
@@ -941,7 +1012,13 @@
                 if (!checked || checked.value === 'absent') return;
                 const joueur = membresActifsCache.find(m => m.id === uid);
                 if (!joueur) return;
-                const j = { ...joueur, positionPrincipale: joueur.position };
+                const j = {
+                    ...joueur,
+                    positionPrincipale: joueur.position,
+                    impactRating: typeof joueur.impactRating === 'number' && !isNaN(joueur.impactRating)
+                        ? joueur.impactRating
+                        : 1000
+                };
                 if (checked.value === 'A') equipeA.push(j);
                 else equipeB.push(j);
             });
@@ -966,57 +1043,72 @@
                 const resultatA = scoreA > scoreB ? 'victoire' : scoreA < scoreB ? 'defaite' : 'nul';
                 const resultatB = scoreB > scoreA ? 'victoire' : scoreB < scoreA ? 'defaite' : 'nul';
 
-                const batch = writeBatch(db);
+                const matchNow = new Date();
+                // Idempotence : si un créneau hebdo est lié, on utilise son ID comme clé du match.
+                // Double validation (deux clics / deux onglets) → la transaction détecte le doc existant et abort.
+                // Pour les matchs manuels : ID aléatoire (le bouton disabled synchrone reste la protection principale).
+                const matchRef = currentOpenMatch
+                    ? doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS, currentOpenMatch.id)
+                    : doc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS));
 
-                // Mettre à jour les stats des joueurs
-                [...equipeA, ...equipeB].forEach(joueur => {
-                    const delta = changements[joueur.id];
-                    const res = equipeA.includes(joueur) ? resultatA : resultatB;
-                    const ref = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, joueur.id);
-                    batch.update(ref, {
-                        impactRating: delta.nouveau,
-                        matchsJoues: (joueur.matchsJoues || 0) + 1,
-                        victoires: (joueur.victoires || 0) + (res === 'victoire' ? 1 : 0),
-                        nuls: (joueur.nuls || 0) + (res === 'nul' ? 1 : 0),
-                        defaites: (joueur.defaites || 0) + (res === 'defaite' ? 1 : 0)
-                    });
-                });
-
-                // Mettre à jour les synergies pour chaque équipe
-                const updateSynPairs = (equipe, resultat) => {
-                    const scoreDiff = resultat === 'victoire' ? (scoreA - scoreB) : (scoreB - scoreA);
-                    for (let i = 0; i < equipe.length; i++) {
-                        for (let j = i + 1; j < equipe.length; j++) {
-                            const [u1, u2] = [equipe[i].id, equipe[j].id].sort();
-                            const synRef = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.SYNERGIES, `${u1}-${u2}`);
-                            // On va lire les synergies existantes avant le batch
-                            // Stocker pour traitement après
-                        }
-                    }
-                };
-
-                await batch.commit();
-
-                // Synergies (séparément car nécessite lecture)
-                await updateSynergies(equipeA, equipeB, scoreA, scoreB, resultatA, resultatB);
-
-                // Sauvegarder le match
-                await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS), {
-                    date: new Date().toISOString(),
+                const matchPayload = {
                     equipeA: equipeA.map(j => j.id),
                     equipeB: equipeB.map(j => j.id),
                     scoreA, scoreB,
                     statut: 'joue',
                     changements,
-                    dateCreation: new Date().toISOString()
+                    dateCreation: matchNow.toISOString(),
+                    presentsCount: equipeA.length + equipeB.length,
+                    nbVotes: 0,
+                    voteClos: false,
+                    dateVoteFermeture: new Date(matchNow.getTime() + 24 * 60 * 60 * 1000).toISOString()
+                };
+
+                // Transaction unique : check idempotence + écriture match + écriture stats joueurs
+                await runTransaction(db, async (tx) => {
+                    if (currentOpenMatch) {
+                        const existing = await tx.get(matchRef);
+                        if (existing.exists()) throw new Error('match_already_validated');
+                    }
+
+                    tx.set(matchRef, matchPayload);
+
+                    [...equipeA, ...equipeB].forEach(joueur => {
+                        const delta = changements[joueur.id];
+                        const res = equipeA.includes(joueur) ? resultatA : resultatB;
+                        const ref = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, joueur.id);
+                        tx.update(ref, {
+                            impactRating: delta.nouveau,
+                            matchsJoues: (joueur.matchsJoues || 0) + 1,
+                            victoires: (joueur.victoires || 0) + (res === 'victoire' ? 1 : 0),
+                            nuls: (joueur.nuls || 0) + (res === 'nul' ? 1 : 0),
+                            defaites: (joueur.defaites || 0) + (res === 'defaite' ? 1 : 0)
+                        });
+                    });
                 });
+
+                // Synergies (post-transaction, nécessite des lectures séparées).
+                // Idempotence assurée par l'abort de la transaction ci-dessus en cas de double validation.
+                await updateSynergies(equipeA, equipeB, scoreA, scoreB, resultatA, resultatB);
+
+                // Fermer le créneau hebdo actif pour éviter qu'il reste ouvert en parallèle
+                if (currentOpenMatch) {
+                    await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, currentOpenMatch.id), {
+                        statut: 'fermé'
+                    });
+                    currentOpenMatch = null;
+                }
 
                 afficherResultats(changements, equipeA, equipeB, scoreA, scoreB, resultatA, resultatB);
                 await loadMembres();
 
             } catch (err) {
                 console.error('Erreur soumission match:', err);
-                errorEl.textContent = 'Erreur lors de la soumission. Réessaye.';
+                if (err.message === 'match_already_validated') {
+                    errorEl.textContent = 'Ce match a déjà été validé (peut-être depuis un autre onglet). Recharge la page.';
+                } else {
+                    errorEl.textContent = 'Erreur lors de la soumission. Réessaye.';
+                }
                 errorEl.classList.remove('hidden');
             } finally {
                 btn.disabled = false; btn.textContent = '⚽ Valider le match';
@@ -1060,7 +1152,7 @@
                         const sign = c.changement >= 0 ? '+' : '';
                         const cls = c.changement > 0 ? 'delta-positive' : c.changement < 0 ? 'delta-negative' : 'delta-zero';
                         return `<div class="rating-change-row">
-                            <span>${j.displayName}</span>
+                            <span>${escapeHtml(j.displayName)}</span>
                             <span>${c.ancien} → <strong>${c.nouveau}</strong> <span class="${cls}">(${sign}${c.changement})</span></span>
                         </div>`;
                     }).join('')}
@@ -1081,7 +1173,11 @@
 
         // Peupler le tableau de match quand on clique sur l'onglet
         document.querySelector('[data-tab="matchs"]').addEventListener('click', () => {
-            if (membresActifsCache.length === 0) {
+            if (membresActifsCache.length > 0) {
+                // Cache déjà chargé par loadMembres() → on l'utilise directement
+                buildMatchPlayersTable(membresActifsCache);
+            } else {
+                // Fallback si init() n'a pas encore terminé
                 getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS)).then(snap => {
                     const actifs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.statut === 'active');
                     buildMatchPlayersTable(actifs);

@@ -88,7 +88,7 @@
 
     <script type="module">
         import { requireAuth, isSuperAdmin, deconnecter } from './js/auth.js';
-        import { db, collection, getDocs, COLLECTIONS } from './js/firebase-config.js';
+        import { db, collection, getDocs, COLLECTIONS, escapeHtml } from './js/firebase-config.js';
 
         async function init() {
             const user = await requireAuth();
@@ -140,15 +140,15 @@
                         ${groupes.map(g => {
                             const admin = users.find(u => u.id === g.adminId);
                             return `<tr>
-                                <td><strong>${g.nom}</strong></td>
-                                <td><code class="code-badge">${g.code}</code></td>
-                                <td>${admin?.displayName || (g.adminId ? g.adminId.slice(0,8)+'...' : '—')}</td>
+                                <td><strong>${escapeHtml(g.nom)}</strong></td>
+                                <td><code class="code-badge">${escapeHtml(g.code)}</code></td>
+                                <td>${escapeHtml(admin?.displayName || (g.adminId ? g.adminId.slice(0,8)+'...' : '—'))}</td>
                                 <td>${g.membres?.filter(m => m.statut === 'active').length || 0}</td>
                                 <td>${g.pendingCount > 0 ? `<span class="badge badge-warning">${g.pendingCount}</span>` : '0'}</td>
                                 <td>${g.maxJoueursMatch || '?'}</td>
                                 <td>
-                                    <a href="admin-groupe.html?id=${g.id}" class="btn-sm btn-primary">Gérer</a>
-                                    <a href="groupe.html?id=${g.id}" class="btn-sm btn-ghost">Voir</a>
+                                    <a href="admin-groupe.html?id=${encodeURIComponent(g.id)}" class="btn-sm btn-primary">Gérer</a>
+                                    <a href="groupe.html?id=${encodeURIComponent(g.id)}" class="btn-sm btn-ghost">Voir</a>
                                 </td>
                             </tr>`;
                         }).join('')}
@@ -168,9 +168,9 @@
                     </tr></thead>
                     <tbody>
                         ${sorted.map(u => `<tr>
-                            <td><strong>${u.displayName || '—'}</strong></td>
-                            <td>${u.email}</td>
-                            <td>${u.position ? `<span class="pos-badge ${u.position.toLowerCase()}">${u.position}</span>` : '—'}</td>
+                            <td><strong>${escapeHtml(u.displayName) || '—'}</strong></td>
+                            <td>${escapeHtml(u.email)}</td>
+                            <td>${u.position ? `<span class="pos-badge ${escapeHtml(u.position.toLowerCase())}">${escapeHtml(u.position)}</span>` : '—'}</td>
                             <td>${u.profilComplet ? '✅' : '⏳'}</td>
                             <td>${u.dateInscription ? new Date(u.dateInscription).toLocaleDateString('fr-FR') : '—'}</td>
                         </tr>`).join('')}

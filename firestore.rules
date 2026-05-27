@@ -14,14 +14,36 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == userId;
     }
 
-    // Vérifie si l'utilisateur est membre actif d'un groupe
+    // Vérifie si l'utilisateur est membre actif (statut: 'active') d'un groupe
     function isMembre(groupeId) {
-      return isAuth() && exists(/databases/$(database)/documents/groupes/$(groupeId)/joueurs/$(request.auth.uid));
+      return isAuth() &&
+        get(/databases/$(database)/documents/groupes/$(groupeId)/joueurs/$(request.auth.uid)).data.statut == 'active';
     }
 
     // Vérifie si l'utilisateur est admin d'un groupe
     function isAdminGroupe(groupeId) {
       return isAuth() && get(/databases/$(database)/documents/groupes/$(groupeId)).data.adminId == request.auth.uid;
+    }
+
+    // Vérifie si l'utilisateur est super admin (champ superAdmin == true dans admins/{uid})
+    // Le super admin peut administrer n'importe quel groupe.
+    function isSuperAdmin() {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.superAdmin == true;
+    }
+
+    // Raccourci : admin du groupe OU super admin
+    function isAdminOrSuper(groupeId) {
+      return isAdminGroupe(groupeId) || isSuperAdmin();
+    }
+
+    // Vérifie qu'un vote est valide (votant présent au match, vote non clos)
+    function voteIsValid(groupeId, matchId) {
+      let m = get(/databases/$(database)/documents/groupes/$(groupeId)/matchs/$(matchId)).data;
+      return m.voteClos == false &&
+        ((m.equipeA is list && request.auth.uid in m.equipeA) ||
+         (m.equipeB is list && request.auth.uid in m.equipeB));
     }
 
     // ==================== COLLECTION ADMINS ====================
@@ -52,8 +74,8 @@ service cloud.firestore {
       // Tout utilisateur connecté peut créer un groupe (il en devient l'admin)
       allow create: if isAuth() && request.resource.data.adminId == request.auth.uid;
 
-      // Seul l'admin du groupe peut modifier le groupe
-      allow update: if isAdminGroupe(groupeId);
+      // L'admin du groupe ou le super admin peut modifier le groupe
+      allow update: if isAdminOrSuper(groupeId);
       allow delete: if false;
 
       // ==================== SOUS-COLLECTION JOUEURS (membres du groupe) ====================
@@ -61,12 +83,27 @@ service cloud.firestore {
         // Les membres peuvent lire la liste
         allow read: if isAuth();
 
-        // Un utilisateur connecté peut créer sa propre demande d'adhésion
-        allow create: if isOwner(joueurId);
+        // Un utilisateur peut créer sa propre fiche dans un groupe.
+        // Stats forcées à 0, rating à 1000. Le statut 'active' n'est autorisé que pour
+        // le créateur du groupe (cas de l'auto-inscription admin). Sinon : 'pending'.
+        allow create: if isOwner(joueurId) &&
+          request.resource.data.impactRating == 1000 &&
+          request.resource.data.matchsJoues == 0 &&
+          request.resource.data.victoires == 0 &&
+          request.resource.data.nuls == 0 &&
+          request.resource.data.defaites == 0 &&
+          (
+            request.resource.data.statut == 'pending' ||
+            (request.resource.data.statut == 'active' && isAdminGroupe(groupeId))
+          );
 
-        // L'admin peut modifier le statut (valider/refuser), le joueur peut se mettre à jour lui-même
-        allow update: if isAdminGroupe(groupeId) || isOwner(joueurId);
-        allow delete: if isAdminGroupe(groupeId);
+        // L'admin (ou super admin) peut tout modifier (validation, stats, rating, trophées via CF)
+        // Un joueur ne peut mettre à jour QUE votesParticipes sur son propre doc
+        allow update: if isAdminOrSuper(groupeId) ||
+          (isOwner(joueurId) &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votesParticipes']));
+
+        allow delete: if isAdminOrSuper(groupeId);
       }
 
       // ==================== SOUS-COLLECTION MATCHS ====================
@@ -74,14 +111,19 @@ service cloud.firestore {
         // Les membres actifs peuvent lire les matchs
         allow read: if isAuth();
 
-        // Seul l'admin peut créer/modifier/supprimer des matchs
-        allow write: if isAdminGroupe(groupeId);
+        // Seul l'admin ou le super admin peut créer/supprimer un match
+        allow create, delete: if isAdminOrSuper(groupeId);
+
+        // L'admin peut tout modifier ; un membre actif ne peut incrémenter que nbVotes (pour le vote)
+        allow update: if isAdminOrSuper(groupeId) ||
+          (isMembre(groupeId) &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nbVotes']));
       }
 
       // ==================== SOUS-COLLECTION SYNERGIES ====================
       match /synergies/{synergieId} {
         allow read: if isAuth();
-        allow write: if isAdminGroupe(groupeId);
+        allow write: if isAdminOrSuper(groupeId);
       }
 
       // ==================== SOUS-COLLECTION MATCHS SEMAINE ====================
@@ -89,22 +131,53 @@ service cloud.firestore {
         allow read: if isAuth();
 
         // L'admin peut créer/supprimer un créneau
-        allow create, delete: if isAdminGroupe(groupeId);
+        allow create, delete: if isAdminOrSuper(groupeId);
 
-        // L'admin OU un membre actif peut mettre à jour
-        // (les membres mettent à jour confirmedCount lors d'inscription/annulation)
-        allow update: if isAdminGroupe(groupeId) || isMembre(groupeId);
+        // L'admin peut tout modifier ; un membre actif ne peut modifier QUE confirmedCount
+        // (incrément à l'inscription / décrément à la désinscription, depuis le client).
+        allow update: if isAdminOrSuper(groupeId) ||
+          (isMembre(groupeId) &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmedCount']));
 
         // ==================== INSCRIPTIONS ====================
         match /inscriptions/{uid} {
           allow read: if isMembre(groupeId);
 
-          // Un joueur peut s'inscrire lui-même si il est membre actif
-          allow create: if isOwner(uid) && isMembre(groupeId);
+          // Un joueur peut s'inscrire lui-même. uid doit correspondre à l'auth, statut limité
+          // à 'confirmé' (place dispo) ou 'attente' (liste d'attente).
+          allow create: if isOwner(uid) && isMembre(groupeId) &&
+            request.resource.data.uid == request.auth.uid &&
+            request.resource.data.statut in ['confirmé', 'attente'];
 
           // Un joueur peut annuler sa propre inscription
           allow delete: if isOwner(uid) && isMembre(groupeId);
         }
+      }
+
+      // ==================== SOUS-COLLECTION VOTES (man of the match) ====================
+      // Le path complet est /groupes/{groupeId}/matchs/{matchId}/votes/{votantId}
+      match /matchs/{matchId}/votes/{votantId} {
+        // Tout membre actif peut lire les votes
+        // (TODO P1 : passer en owner-only pour un scrutin secret)
+        allow read: if isMembre(groupeId);
+
+        // Un joueur peut voter une seule fois (immutabilité via update/delete false).
+        // Validation côté serveur : top distincts, votant != tops, votant présent au match,
+        // vote non clos.
+        allow create: if isOwner(votantId) && isMembre(groupeId) &&
+          request.resource.data.top1 is string &&
+          request.resource.data.top2 is string &&
+          request.resource.data.top3 is string &&
+          request.resource.data.top1 != request.auth.uid &&
+          request.resource.data.top2 != request.auth.uid &&
+          request.resource.data.top3 != request.auth.uid &&
+          request.resource.data.top1 != request.resource.data.top2 &&
+          request.resource.data.top1 != request.resource.data.top3 &&
+          request.resource.data.top2 != request.resource.data.top3 &&
+          voteIsValid(groupeId, matchId);
+
+        // Les votes sont immuables
+        allow update, delete: if false;
       }
     }
   }
