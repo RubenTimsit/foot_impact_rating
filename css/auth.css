@@ -21,6 +21,7 @@ body {
     background: var(--dark);
     color: var(--light);
     min-height: 100vh;
+    min-height: 100dvh;
     line-height: 1.6;
 }
 
@@ -29,6 +30,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* ==================== PANNEAU GAUCHE ==================== */
@@ -306,13 +308,26 @@ blockquote {
 @media (max-width: 768px) {
     .auth-layout {
         grid-template-columns: 1fr;
+        min-height: 100dvh;
     }
-    .auth-side {
-        display: none;
-    }
+    .auth-side { display: none; }
     .auth-main {
         padding: 1.5rem;
+        padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1.5rem));
+        padding-bottom: max(2rem, calc(env(safe-area-inset-bottom) + 1rem));
         align-items: flex-start;
-        padding-top: 3rem;
     }
+    .auth-card { max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .auth-main {
+        padding: 1.25rem;
+        padding-top: max(2rem, calc(env(safe-area-inset-top) + 1.25rem));
+        padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 0.75rem));
+    }
+    .auth-tabs { margin-bottom: 1.25rem; }
+    .btn-submit { min-height: 52px; font-size: 1rem; }
+    .form-group input,
+    .form-group select { font-size: 1rem; /* évite le zoom iOS sur focus */ padding: 0.85rem 1rem; }
 }

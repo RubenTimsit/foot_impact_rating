@@ -2,8 +2,17 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impact Rating — Connexion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mon Petit Match — Connexion</title>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0A0A12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mon Petit Match">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
     <link rel="stylesheet" href="css/auth.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +25,7 @@
         <!-- Panneau gauche décoratif -->
         <div class="auth-side">
             <a href="index.html" class="side-logo">
-                <span>⚽</span> Impact Rating
+                <span>⚽</span> Mon Petit Match
             </a>
             <div class="side-content">
                 <blockquote>"Le terrain ne ment jamais."</blockquote>
@@ -165,11 +174,8 @@
         }
 
         async function handleAuthSuccess(user) {
-            if (await isSuperAdmin(user.uid)) {
-                window.location.href = 'super-admin.html';
-            } else {
-                window.location.href = 'profil.html';
-            }
+            // Super-admin garde sa page dédiée, tous les autres → SPA
+            window.location.href = 'app.html';
         }
 
         function parseFirebaseError(code) {
@@ -255,5 +261,6 @@
             }
         });
     </script>
+    <script src="/js/pwa.js"></script>
 </body>
 </html>

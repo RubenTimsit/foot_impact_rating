@@ -87,7 +87,7 @@ service cloud.firestore {
         // Stats forcées à 0, rating à 1000. Le statut 'active' n'est autorisé que pour
         // le créateur du groupe (cas de l'auto-inscription admin). Sinon : 'pending'.
         allow create: if isOwner(joueurId) &&
-          request.resource.data.impactRating == 1000 &&
+          (request.resource.data.rating == 1000 || request.resource.data.impactRating == 1000) &&
           request.resource.data.matchsJoues == 0 &&
           request.resource.data.victoires == 0 &&
           request.resource.data.nuls == 0 &&
@@ -97,11 +97,15 @@ service cloud.firestore {
             (request.resource.data.statut == 'active' && isAdminGroupe(groupeId))
           );
 
-        // L'admin (ou super admin) peut tout modifier (validation, stats, rating, trophées via CF)
-        // Un joueur ne peut mettre à jour QUE votesParticipes sur son propre doc
+        // L'admin (ou super admin) peut tout modifier (validation, stats, rating, trophées via CF, sousGroupe)
+        // Un joueur peut mettre à jour ses propres infos de profil (displayName, position, profilMilieu)
+        // et son compteur votesParticipes, mais jamais les stats de jeu ni sousGroupe.
         allow update: if isAdminOrSuper(groupeId) ||
           (isOwner(joueurId) &&
-           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votesParticipes']));
+           request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['votesParticipes', 'displayName', 'position', 'profilMilieu']) &&
+           !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['sousGroupe', 'statut', 'rating', 'matchsJoues', 'victoires', 'nuls', 'defaites', 'trophees']));
 
         allow delete: if isAdminOrSuper(groupeId);
       }
@@ -143,10 +147,10 @@ service cloud.firestore {
         match /inscriptions/{uid} {
           allow read: if isMembre(groupeId);
 
-          // Un joueur peut s'inscrire lui-même. uid doit correspondre à l'auth, statut limité
+          // Un joueur peut s'inscrire lui-même. userId doit correspondre à l'auth, statut limité
           // à 'confirmé' (place dispo) ou 'attente' (liste d'attente).
           allow create: if isOwner(uid) && isMembre(groupeId) &&
-            request.resource.data.uid == request.auth.uid &&
+            (request.resource.data.userId == request.auth.uid || request.resource.data.uid == request.auth.uid) &&
             request.resource.data.statut in ['confirmé', 'attente'];
 
           // Un joueur peut annuler sa propre inscription

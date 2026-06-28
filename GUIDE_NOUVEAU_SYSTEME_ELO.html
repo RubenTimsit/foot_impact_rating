@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Nouveau système de classement — Guide joueurs</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #fff;
+    color: #1a1a2e;
+    padding: 40px 50px;
+    max-width: 900px;
+    margin: 0 auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #16213e;
+    border-bottom: 4px solid #2ecc71;
+    padding-bottom: 10px;
+    margin-bottom: 28px;
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f3460;
+    margin: 28px 0 12px;
+    padding-left: 10px;
+    border-left: 4px solid #2ecc71;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin: 18px 0 8px;
+  }
+
+  p { margin-bottom: 10px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 13px;
+  }
+
+  thead tr { background: #16213e; color: #fff; }
+  thead th { padding: 9px 12px; text-align: left; font-weight: 600; }
+
+  tbody tr:nth-child(even) { background: #f4f8f4; }
+  tbody tr:nth-child(odd)  { background: #fff; }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid #e8e8e8; }
+
+  .highlight { background: #e8f8ee !important; font-weight: 700; }
+  .warn      { background: #fff3e0 !important; }
+
+  .rule-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin: 14px 0 20px;
+  }
+
+  .rule-card {
+    background: #f0faf4;
+    border: 1px solid #b2dfcc;
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .rule-card .num {
+    font-size: 22px;
+    font-weight: 800;
+    color: #2ecc71;
+  }
+
+  .rule-card p { margin: 4px 0 0; font-size: 13px; }
+
+  blockquote {
+    background: #f0faf4;
+    border-left: 4px solid #2ecc71;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    font-size: 13px;
+    color: #333;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 12px 0;
+  }
+
+  .badge-green { color: #27ae60; font-weight: 700; }
+  .badge-red   { color: #e74c3c; font-weight: 700; }
+  .badge-gold  { color: #f39c12; font-weight: 700; }
+
+  .section-divider {
+    border: none;
+    border-top: 2px solid #e8e8e8;
+    margin: 24px 0;
+  }
+
+  .footer {
+    margin-top: 36px;
+    padding-top: 14px;
+    border-top: 2px solid #2ecc71;
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+  }
+
+  @media print {
+    body { padding: 20px 30px; }
+    .rule-box { break-inside: avoid; }
+    table { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🏆 Nouveau système de classement — Guide joueurs</h1>
+
+<!-- ── Système actuel ── -->
+<h2>Le système actuel — comment ça fonctionne</h2>
+
+<p>Le classement actuel repose sur un <strong>ELO pur</strong> — le même système utilisé aux échecs. Chaque joueur part d'un score de 1000. Après chaque match :</p>
+<ul style="margin: 8px 0 14px 20px; font-size: 13px;">
+  <li>Les <strong>vainqueurs gagnent des points</strong> (+37 à +75 selon le score et le niveau des équipes)</li>
+  <li>Les <strong>perdants en perdent autant</strong> (−37 à −75)</li>
+  <li>C'est un jeu à <strong>somme nulle</strong> : ce que les uns gagnent, les autres le perdent</li>
+</ul>
+
+<p>Le niveau des équipes est pris en compte : battre une équipe plus forte rapporte plus, perdre contre une équipe plus faible coûte plus.</p>
+
+<h2>Pourquoi on veut changer ?</h2>
+
+<p>Le système ELO pur est excellent pour mesurer le niveau relatif des joueurs dans un contexte compétitif. Mais dans un groupe de foot loisir hebdomadaire, il crée <strong>trois problèmes concrets</strong> :</p>
+
+<table>
+  <thead><tr><th>#</th><th>Problème</th><th>Ce que ça provoque</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>On peut <strong>perdre des points</strong> en jouant</td>
+      <td>Un joueur en mauvaise passe hésite à venir — chaque match perdu aggrave son classement. L'ELO punit la présence en cas de défaite.</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>La <strong>régularité n'est pas récompensée</strong></td>
+      <td>Quelqu'un qui vient <em>toutes les semaines depuis 6 mois</em> peut être moins bien classé qu'un nouveau qui a joué 2 matchs et gagné. Le classement ne reflète pas l'investissement.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>Un <strong>nouveau peut direct entrer dans le top</strong></td>
+      <td>1 match gagné + être élu MOM = entrer dans le top 3, devant des habitués qui jouent depuis des mois. C'est mathématiquement possible et fruistrant.</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>Le classement devrait récompenser à la fois <strong>le niveau</strong> et <strong>l'investissement</strong> dans le groupe. Le système actuel ne mesure que le premier.</blockquote>
+
+<!-- ── 3 règles ── -->
+<h2>Comment ça marche — les 3 règles</h2>
+
+<div class="rule-box">
+  <div class="rule-card">
+    <div class="num">1</div>
+    <p><strong>Tu ne perds jamais de points</strong><br>Perdre donne moins, mais tu avances toujours. Venir jouer est toujours rentable.</p>
+  </div>
+  <div class="rule-card">
+    <div class="num">2</div>
+    <p><strong>75% résultats · 25% présence</strong><br>Les victoires rapportent 3× plus que les défaites. Les résultats sont le moteur principal, la régularité compte en second.</p>
+  </div>
+  <div class="rule-card">
+    <div class="num">3</div>
+    <p><strong>La régularité compte (25%)</strong><br>Un habitué régulier finira toujours devant quelqu'un qui a joué 2 matchs, même si ce dernier a bien performé.</p>
+  </div>
+</div>
+
+<!-- ── Logique ELO ── -->
+<h2>La logique ELO — gagner "mérité" rapporte plus</h2>
+
+<p>Le système tient compte du niveau des équipes :</p>
+<ul style="margin: 8px 0 14px 20px; font-size: 13px;">
+  <li>Battre une équipe <strong>plus forte</strong> → <span class="badge-green">gros gain</span></li>
+  <li>Battre une équipe <strong>plus faible</strong> → gain modéré</li>
+  <li>Perdre contre une équipe <strong>bien supérieure</strong> → perte minime</li>
+</ul>
+
+<h3>Les incentives sont symétriques</h3>
+
+<table>
+  <thead><tr><th>Équipe</th><th>Objectif</th><th>Pourquoi</th></tr></thead>
+  <tbody>
+    <tr class="highlight"><td>✅ Gagnants</td><td>Marquer le plus possible</td><td>Plus l'écart est grand, plus ils gagnent de points</td></tr>
+    <tr class="warn"><td>❌ Perdants</td><td>Encaisser le moins possible</td><td>Moins l'écart est grand, plus ils gardent de points</td></tr>
+  </tbody>
+</table>
+
+<blockquote>Personne n'a intérêt à "lâcher" le match — ni les gagnants qui veulent creuser l'écart, ni les perdants qui veulent le limiter.</blockquote>
+
+<table>
+  <thead><tr><th>Score</th><th>Victoire</th><th>Défaite</th><th>Commentaire</th></tr></thead>
+  <tbody>
+    <tr><td>1-0 / 0-1</td><td class="badge-green">+75</td><td>+27</td><td>Match serré — la défaite est bien "récompensée"</td></tr>
+    <tr><td>2-0 / 0-2</td><td class="badge-green">+85</td><td>+24</td><td></td></tr>
+    <tr><td>3-0 / 0-3</td><td class="badge-green">+96</td><td>+21</td><td></td></tr>
+    <tr><td>5-0 / 0-5</td><td class="badge-green">+117</td><td>+18</td><td></td></tr>
+    <tr><td>8-0 / 0-8</td><td class="badge-green">+149</td><td class="badge-red">+14</td><td>Déroute — pénalisé mais on reste positif</td></tr>
+  </tbody>
+</table>
+
+<hr class="section-divider">
+
+<!-- ── MOM ── -->
+<h2>Le bonus Homme du Match — 3 joueurs sur 16 récompensés</h2>
+
+<p>Sur un match à 16 joueurs, <strong>seulement 3</strong> reçoivent un bonus. C'est rare, difficile à obtenir, et impossible à manipuler :</p>
+
+<table>
+  <thead><tr><th>Garde-fou</th><th>Pourquoi ça compte</th></tr></thead>
+  <tbody>
+    <tr><td>🚫 Tu ne peux pas voter pour toi-même</td><td>Le bonus ne peut pas être auto-attribué</td></tr>
+    <tr><td>👥 Le vote est collectif</td><td>Jouer égoïste pour "briller" ne rapporte généralement pas de votes — tes coéquipiers récompensent celui qui a vraiment aidé l'équipe</td></tr>
+    <tr><td>🎯 3 élus sur ~16 joueurs</td><td>La probabilité d'être élu est faible — être dans le top 3 est une vraie distinction</td></tr>
+  </tbody>
+</table>
+
+<p>Ces garanties justifient un bonus significatif. Dans l'ancien système, le MOM ne rapportait que +25%/+15%/+8% — trop faible pour être perceptible dans le classement. Le nouveau bonus <strong>+75%/+40%/+20%</strong> rend l'élection MOM vraiment visible sans récompenser le jeu individuel au détriment du collectif.</p>
+
+<p>Le bonus s'applique sur le gain du match, victoire ou défaite :</p>
+
+<table>
+  <thead><tr><th></th><th>Victoire 2-0</th><th>Défaite 0-2</th></tr></thead>
+  <tbody>
+    <tr class="highlight"><td>🥇 Top 1 (+75%)</td><td><strong>+149</strong></td><td><strong>+42</strong></td></tr>
+    <tr><td>🥈 Top 2 (+40%)</td><td><strong>+119</strong></td><td><strong>+34</strong></td></tr>
+    <tr><td>🥉 Top 3 (+20%)</td><td><strong>+102</strong></td><td><strong>+29</strong></td></tr>
+    <tr><td>Joueur normal</td><td>+85</td><td>+24</td></tr>
+  </tbody>
+</table>
+
+<blockquote>Un MOM 🥇 dans l'équipe perdante (0-2) repart avec <strong>+42 pts</strong>, contre <strong>+85</strong> pour un joueur normal vainqueur. Il ne rattrape pas un vainqueur, mais il limite nettement la casse et se distingue clairement de ses coéquipiers (+24). Ça récompense la performance individuelle malgré la défaite collective.</blockquote>
+
+<hr class="section-divider">
+
+<!-- ── Simulations ── -->
+<h2>Simulations — évolution du score selon le profil</h2>
+<p style="font-size:12px; color:#888; margin-bottom:10px;">Score moyen par match : 2-0. Équipes équilibrées.</p>
+
+<table>
+  <thead><tr><th>Matchs joués</th><th>100% WR</th><th>70% WR</th><th>50% WR</th><th>30% WR</th><th>0% WR</th></tr></thead>
+  <tbody>
+    <tr><td>5</td><td>425</td><td>343</td><td>285</td><td>227</td><td>120</td></tr>
+    <tr><td>10</td><td>850</td><td>686</td><td>570</td><td>454</td><td>240</td></tr>
+    <tr class="highlight"><td>20</td><td>1 700</td><td>1 372</td><td>1 140</td><td>908</td><td>480</td></tr>
+    <tr><td>30</td><td>2 550</td><td>2 057</td><td>1 710</td><td>1 362</td><td>720</td></tr>
+    <tr><td>50</td><td>4 250</td><td>3 430</td><td>2 850</td><td>2 270</td><td>1 200</td></tr>
+  </tbody>
+</table>
+
+<p>→ La différence entre 70% WR et 30% WR se creuse progressivement sans jamais écraser celui qui joue moins bien.</p>
+
+<hr class="section-divider">
+
+<!-- ── Newcomer vs vétéran ── -->
+<h2>Newcomer vs habitués</h2>
+
+<table>
+  <thead><tr><th>Joueur</th><th>Contexte</th><th>Score</th></tr></thead>
+  <tbody>
+    <tr><td>Nouveau — 1 match gagné 2-0 + MOM 🥇</td><td>Score moyen</td><td class="badge-gold"><strong>149</strong></td></tr>
+    <tr><td>Nouveau — 1 match gagné 5-0 + MOM 🥇</td><td>Belle victoire</td><td class="badge-gold"><strong>205</strong></td></tr>
+    <tr><td>Nouveau — 1 match gagné 8-0 + MOM 🥇</td><td>Meilleur scénario possible</td><td class="badge-gold"><strong>261</strong></td></tr>
+    <tr class="highlight"><td>Habitué — 5 matchs, 70% WR</td><td>—</td><td><strong>343</strong></td></tr>
+    <tr class="highlight"><td>Habitué — 10 matchs, 50% WR</td><td>—</td><td><strong>570</strong></td></tr>
+    <tr class="highlight"><td>Présent toutes les semaines, 20 matchs, 30% WR</td><td>—</td><td><strong>908</strong></td></tr>
+  </tbody>
+</table>
+
+<p><strong>Le classement existant est migré</strong> — personne ne repart de zéro, l'historique est converti dans le nouveau système.</p>
+
+<hr class="section-divider">
+
+<!-- ── Classement réel simulé ── -->
+<h2>Classement réel simulé (3 soirées)</h2>
+
+<p>Ce tableau est le résultat concret du script de recalcul appliqué aux 3 derniers matchs enregistrés dans la base. Il permet de valider que le système fonctionne comme prévu.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Joueur</th>
+      <th>Score</th>
+      <th>Matchs</th>
+      <th>V pondérées</th>
+      <th>D pondérées</th>
+      <th>🥇</th>
+      <th>🥈</th>
+      <th>🥉</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><td>1</td><td>Avner</td><td class="badge-gold"><strong>319</strong></td><td>3</td><td>2.33</td><td>0.67</td><td>0</td><td>0</td><td>1</td></tr>
+    <tr><td>2</td><td>Jordan haik</td><td><strong>315</strong></td><td>2</td><td>2.00</td><td>0.00</td><td>0</td><td>1</td><td>0</td></tr>
+    <tr><td>3</td><td>Sacha Giuili</td><td><strong>284</strong></td><td>1</td><td>1.00</td><td>0.00</td><td>1</td><td>0</td><td>0</td></tr>
+    <tr><td>4</td><td>Adamax</td><td><strong>225</strong></td><td>2</td><td>1.67</td><td>0.33</td><td>1</td><td>0</td><td>0</td></tr>
+    <tr><td>5</td><td>Noe Sroussi</td><td><strong>208</strong></td><td>3</td><td>1.33</td><td>1.67</td><td>1</td><td>0</td><td>1</td></tr>
+    <tr><td>6</td><td>Ruben Sayada (Ruben S)</td><td><strong>199</strong></td><td>2</td><td>1.33</td><td>0.67</td><td>—</td><td></td><td></td></tr>
+    <tr><td>7</td><td><strong>Benjamin S</strong></td><td><strong>194</strong></td><td>3</td><td>1.67</td><td>1.33</td><td>0</td><td>0</td><td>1</td></tr>
+    <tr><td>8</td><td>Isaac Leyne</td><td><strong>178</strong></td><td>2</td><td>1.00</td><td>1.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>9</td><td>Ilan Teboul</td><td><strong>166</strong></td><td>2</td><td>1.67</td><td>0.33</td><td>—</td><td></td><td></td></tr>
+    <tr><td>10</td><td>Sambo</td><td><strong>166</strong></td><td>2</td><td>1.67</td><td>0.33</td><td>—</td><td></td><td></td></tr>
+    <tr><td>11</td><td>greg benkha</td><td><strong>162</strong></td><td>1</td><td>1.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>12</td><td>ilan souffir</td><td><strong>162</strong></td><td>1</td><td>1.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>13</td><td>David K</td><td><strong>162</strong></td><td>1</td><td>1.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>14</td><td>Ruben Timsit</td><td><strong>157</strong></td><td>2</td><td>1.00</td><td>1.00</td><td>0</td><td>2</td><td>0</td></tr>
+    <tr><td>15</td><td>Liam</td><td><strong>125</strong></td><td>2</td><td>1.33</td><td>0.67</td><td>—</td><td></td><td></td></tr>
+    <tr><td>16</td><td>Elie Memmi</td><td><strong>101</strong></td><td>3</td><td>0.67</td><td>2.33</td><td>—</td><td></td><td></td></tr>
+    <tr><td>17</td><td>Benjamin Amsellem</td><td><strong>78</strong></td><td>1</td><td>0.67</td><td>0.33</td><td>—</td><td></td><td></td></tr>
+    <tr><td>18</td><td>jeremy Levy - NY</td><td><strong>78</strong></td><td>1</td><td>0.67</td><td>0.33</td><td>—</td><td></td><td></td></tr>
+    <tr><td>19</td><td>Koubz</td><td><strong>37</strong></td><td>1</td><td>0.33</td><td>0.67</td><td>—</td><td></td><td></td></tr>
+    <tr><td>20</td><td>Jeremie</td><td><strong>37</strong></td><td>1</td><td>0.33</td><td>0.67</td><td>—</td><td></td><td></td></tr>
+    <tr><td>21</td><td>Ariel</td><td><strong>37</strong></td><td>1</td><td>0.33</td><td>0.67</td><td>—</td><td></td><td></td></tr>
+    <tr><td>22</td><td>Ruben SOUSSI</td><td><strong>23</strong></td><td>2</td><td>0.00</td><td>2.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>23</td><td>Samuel</td><td><strong>23</strong></td><td>2</td><td>0.00</td><td>2.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>24</td><td>David Poignon-Cahen</td><td><strong>13</strong></td><td>1</td><td>0.00</td><td>1.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>25</td><td>David Elone Zana</td><td><strong>13</strong></td><td>1</td><td>0.00</td><td>1.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>26</td><td>Jeremy Levy</td><td><strong>13</strong></td><td>1</td><td>0.00</td><td>1.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>27</td><td>Joshua</td><td><strong>10</strong></td><td>1</td><td>0.00</td><td>1.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>28</td><td>Ilan Dahan</td><td><strong>10</strong></td><td>1</td><td>0.00</td><td>1.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>29</td><td>Ruben Chetrit</td><td><strong>10</strong></td><td>1</td><td>0.00</td><td>1.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>30</td><td class="badge-red">Dylan Sitruk</td><td>0</td><td>0</td><td>0.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>31</td><td class="badge-red">Charles</td><td>0</td><td>0</td><td>0.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>32</td><td class="badge-red">Hugo</td><td>0</td><td>0</td><td>0.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>33</td><td class="badge-red">Ethan</td><td>0</td><td>0</td><td>0.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>34</td><td class="badge-red">Ruben Fitoussi</td><td>0</td><td>0</td><td>0.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>35</td><td class="badge-red">David gianni</td><td>0</td><td>0</td><td>0.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+    <tr><td>36</td><td class="badge-red">Simon</td><td>0</td><td>0</td><td>0.00</td><td>0.00</td><td>—</td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<p style="font-size:12px;color:#555;margin-top:-10px;">
+  <strong>V/D pondérées</strong> — dans une soirée, chaque sous-match est pondéré par son facteur (ici SM1=0,667 · SM2=0,333).
+  Un joueur qui perd les deux sous-matchs d'une soirée a D=1,00 (0,667 + 0,333). Un joueur qui gagne SM1 et perd SM2 a V=0,67 / D=0,33.
+  1 matchsJoués = 1 soirée entière, mais les V/D reflètent le poids réel des résultats.
+</p>
+
+<hr class="section-divider">
+
+<!-- ── Résumé ── -->
+<h2>Résumé</h2>
+
+<blockquote style="font-size: 14px;">
+  Le classement est pensé pour refléter <strong>75% de résultats</strong> et <strong>25% de présence</strong>. Venir jouer régulièrement compte, gagner compte encore plus, et être élu MOM parmi 16 joueurs est un vrai privilège qui se voit dans les chiffres.
+</blockquote>
+
+<div class="footer">
+  Impact Rating — Système ELO v2 &nbsp;·&nbsp; K=128 &nbsp;·&nbsp; Loss factor 1/3 inversé &nbsp;·&nbsp; MOM 100% / 50% / 30%
+</div>
+
+</body>
+</html>

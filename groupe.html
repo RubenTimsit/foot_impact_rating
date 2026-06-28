@@ -2,8 +2,17 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Groupe — Impact Rating</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Groupe — Mon Petit Match</title>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0A0A12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mon Petit Match">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
     <link rel="stylesheet" href="css/groupe.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +22,7 @@
 
     <nav class="app-nav">
         <div class="nav-inner">
-            <a href="profil.html" class="nav-logo">⚽ Impact Rating</a>
+            <a href="profil.html" class="nav-logo">⚽ Mon Petit Match</a>
             <div class="nav-right">
                 <span id="nav-groupe-nom" class="nav-groupe-nom"></span>
                 <a href="profil.html" class="btn-nav-ghost">← Mes groupes</a>
@@ -78,7 +87,7 @@
 
             <!-- CLASSEMENT -->
             <div id="tab-classement" class="tab-content active">
-                <div class="table-container">
+                <div class="classement-card">
                     <!-- FILTRES -->
                     <div class="filters-row">
                         <button class="filter-btn active" data-filter="all">Tous</button>
@@ -87,21 +96,9 @@
                         <button class="filter-btn" data-filter="Milieu">Milieux</button>
                         <button class="filter-btn" data-filter="Attaquant">Attaquants</button>
                     </div>
-                        <table class="data-table" id="classement-table">
-                            <thead><tr>
-                                <th>#</th>
-                                <th>Joueur</th>
-                                <th>Position</th>
-                                <th>Impact Rating</th>
-                                <th>Matchs</th>
-                                <th>V-N-D</th>
-                                <th>Présence</th>
-                                <th title="Votes déposés / Matchs joués">🗳️</th>
-                            </tr></thead>
-                            <tbody id="classement-tbody">
-                                <tr><td colspan="8" class="loading-td"><div class="loader-spinner small"></div></td></tr>
-                            </tbody>
-                        </table>
+                    <div id="classement-list" class="lb-container lb-container-inner">
+                        <div class="lb-row"><div class="lb-left"><span class="lb-rank">…</span><div class="lb-info"><div class="lb-name">Chargement…</div></div></div></div>
+                    </div>
                 </div>
             </div>
 
@@ -162,6 +159,7 @@
         let historiqueLoaded = false;
         let synergiesLoaded = false;
         let currentVoteMatchId = null;
+        let groupe = null;
 
         async function init() {
             if (!groupeId) { window.location.href = 'profil.html'; return; }
@@ -171,7 +169,7 @@
             const snap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId));
             if (!snap.exists()) { window.location.href = 'profil.html'; return; }
 
-            const groupe = { id: snap.id, ...snap.data() };
+            groupe = { id: snap.id, ...snap.data() };
 
             // Vérifier que l'utilisateur est membre actif
             const membreSnap = await getDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, currentUser.uid));
@@ -198,6 +196,12 @@
             await loadProchainMatch();
         }
 
+        // ── Helpers divisions ──────────────────────────────────────
+        function divLabelFor(idx) {
+            const noms = groupe.nomsSousGroupes || [];
+            return (noms[idx - 1] && noms[idx - 1].trim()) ? noms[idx - 1] : `Division ${idx}`;
+        }
+
         async function loadData(groupeId) {
             const [joueursSnap, matchsSnap] = await Promise.all([
                 getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS)),
@@ -207,7 +211,7 @@
             allJoueurs = joueursSnap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .filter(j => j.statut === 'active')
-                .sort((a, b) => (b.impactRating || 1000) - (a.impactRating || 1000));
+                .sort((a, b) => (b.rating || 1000) - (a.rating || 1000));
 
             const matchs = matchsSnap.docs.map(d => d.data());
             const totalMatchs = matchs.filter(m => m.statut === 'joue').length;
@@ -217,49 +221,96 @@
             document.getElementById('stat-top').textContent = allJoueurs[0]?.displayName || '—';
 
             renderClassement(allJoueurs, totalMatchs);
+
+            // Onglets de division (si activées)
+            if ((groupe.nombreSousGroupes || 1) > 1) {
+                _injectDivisionTabs(totalMatchs);
+            }
+        }
+
+        let _divFilterActive = 0; // 0 = tous
+
+        function _injectDivisionTabs(totalMatchs) {
+            const n = groupe.nombreSousGroupes || 1;
+            // Insérer avant la liste de classement
+            const classCard = document.querySelector('.classement-card');
+            if (!classCard || classCard.querySelector('.div-filter-row')) return;
+
+            const row = document.createElement('div');
+            row.className = 'div-filter-row';
+            row.innerHTML = `
+                <button class="div-filter-btn active" data-div="0">Tout</button>
+                ${Array.from({ length: n }, (_, i) => `
+                    <button class="div-filter-btn div-badge-${i+1}" data-div="${i+1}">${escapeHtml(divLabelFor(i+1))}</button>
+                `).join('')}`;
+            classCard.insertBefore(row, classCard.querySelector('.filters-row'));
+
+            row.addEventListener('click', (e) => {
+                const btn = e.target.closest('.div-filter-btn');
+                if (!btn) return;
+                row.querySelectorAll('.div-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                _divFilterActive = parseInt(btn.dataset.div) || 0;
+                const filtered = _divFilterActive === 0
+                    ? allJoueurs
+                    : allJoueurs.filter(j => j.sousGroupe === _divFilterActive);
+                renderClassement(filtered, totalMatchs);
+            });
         }
 
         function renderClassement(joueurs, totalMatchs) {
-            const tbody = document.getElementById('classement-tbody');
+            const container = document.getElementById('classement-list');
             if (!joueurs.length) {
-                tbody.innerHTML = `<tr><td colspan="8" class="empty-td">Aucun joueur actif.</td></tr>`;
+                container.innerHTML = `<div class="lb-row"><div class="lb-left"><div class="lb-info"><div class="lb-name" style="color:var(--text-muted)">Aucun joueur actif.</div></div></div></div>`;
                 return;
             }
 
-            tbody.innerHTML = joueurs.map((j, i) => {
+            const hasDivisions = (groupe.nombreSousGroupes || 1) > 1;
+
+            container.innerHTML = joueurs.map((j, i) => {
                 const presence = totalMatchs > 0 ? Math.round((j.matchsJoues || 0) / totalMatchs * 100) : 0;
                 const isMoi = j.id === currentUser.uid;
+                const rank = i + 1;
+                const rankDisplay = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
                 const t = j.trophees || {};
-                const tropheesHtml = [
+                const tropheeBadges = [
                     t.or > 0 ? `<span class="trophy-mini trophy-or">🥇×${t.or}</span>` : '',
                     t.argent > 0 ? `<span class="trophy-mini trophy-argent">🥈×${t.argent}</span>` : '',
                     t.bronze > 0 ? `<span class="trophy-mini trophy-bronze">🥉×${t.bronze}</span>` : ''
                 ].filter(Boolean).join('');
                 const voteParticipation = (j.matchsJoues || 0) > 0
-                    ? `${j.votesParticipes || 0}/${j.matchsJoues}`
-                    : '—';
+                    ? `${j.votesParticipes || 0}/${j.matchsJoues} 🗳️`
+                    : '';
+                const posLabel = j.position || '';
+                const posClass = posLabel.toLowerCase().replace(/é/g,'e').replace(/è/g,'e');
+                const divBadge = (hasDivisions && j.sousGroupe)
+                    ? `<span class="div-badge-${j.sousGroupe}">${escapeHtml(divLabelFor(j.sousGroupe))}</span>`
+                    : '';
+
+                const chips = [
+                    `<span class="lb-chip">${j.victoires||0}V ${j.nuls||0}N ${j.defaites||0}D</span>`,
+                    `<span class="lb-chip">${presence}%</span>`,
+                    voteParticipation ? `<span class="lb-chip">${voteParticipation}</span>` : '',
+                    tropheeBadges ? `<span class="lb-chip lb-chip-trophy">${tropheeBadges}</span>` : '',
+                ].filter(Boolean).join('');
+
                 return `
-                <tr class="${isMoi ? 'row-me' : ''}">
-                    <td class="rank">${getRankEmoji(i + 1)}</td>
-                    <td>
-                        <div class="player-cell">
-                            <span class="player-name">${escapeHtml(j.displayName) || '—'}</span>
-                            ${isMoi ? '<span class="you-badge">Toi</span>' : ''}
-                            ${tropheesHtml ? `<div class="player-trophees">${tropheesHtml}</div>` : ''}
+                <div class="lb-row${isMoi ? ' row-me' : ''}">
+                    <div class="lb-left">
+                        <span class="lb-rank">${rankDisplay}</span>
+                        <div class="lb-info">
+                            <div class="lb-name">
+                                ${escapeHtml(j.displayName) || '—'}
+                                ${divBadge ? `&nbsp;${divBadge}` : ''}
+                            </div>
+                            ${posLabel ? `<div class="lb-pos"><span class="pos-badge ${posClass}">${escapeHtml(posLabel)}</span></div>` : ''}
                         </div>
-                    </td>
-                    <td><span class="pos-badge ${escapeHtml((j.position || '').toLowerCase())}">${escapeHtml(j.position) || '—'}</span></td>
-                    <td class="rating">${j.impactRating || 1000}</td>
-                    <td>${j.matchsJoues || 0}</td>
-                    <td class="vnd">${j.victoires || 0}V ${j.nuls || 0}N ${j.defaites || 0}D</td>
-                    <td>
-                        <div class="presence-wrap">
-                            <div class="presence-bar"><div class="presence-fill" style="width:${presence}%"></div></div>
-                            <span>${presence}%</span>
-                        </div>
-                    </td>
-                    <td class="vote-part-cell">${voteParticipation}</td>
-                </tr>`;
+                    </div>
+                    <div class="lb-right">
+                        <div class="lb-stat-main">${j.rating || 1000}</div>
+                        <div class="lb-chips">${chips}</div>
+                    </div>
+                </div>`;
             }).join('');
         }
 
@@ -290,11 +341,26 @@
             if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
             try {
                 const snap = await getDocs(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE));
+                const n = groupe.nombreSousGroupes || 1;
+                const monSousGroupe = n > 1 ? (monMembreData?.sousGroupe ?? null) : undefined;
+
                 const matchs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .filter(m => m.statut === 'ouvert' || m.statut === 'programmé')
+                    .filter(m => {
+                        if (m.statut !== 'ouvert' && m.statut !== 'programmé') return false;
+                        if (monSousGroupe === undefined) return true;  // pas de divisions
+                        if (monSousGroupe === null) return false;       // non assigné
+                        const cibles = m.sousGroupesCibles;
+                        return !cibles || cibles.includes(monSousGroupe);
+                    })
                     .sort((a, b) => new Date(a.dateMatch) - new Date(b.dateMatch));
 
-                if (!matchs.length) return;
+                if (!matchs.length) {
+                    if (monSousGroupe === null) {
+                        container.classList.remove('hidden');
+                        container.innerHTML = `<div class="prochain-match-card"><div class="pm-left"><div class="pm-title">⚽ Prochain match</div><div class="pm-date" style="color:var(--text-muted)">Tu n'es assigné à aucune division. Contacte l'admin.</div></div></div>`;
+                    }
+                    return;
+                }
 
                 const match = matchs[0];
                 container.classList.remove('hidden');
@@ -806,5 +872,6 @@
 
         init();
     </script>
+    <script src="/js/pwa.js"></script>
 </body>
 </html>

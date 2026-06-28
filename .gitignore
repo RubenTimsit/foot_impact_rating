@@ -45,3 +45,7 @@ coverage/
 
 # Fichiers spécifiques au projet (optionnel)
 # setup-groupes.html (décommenter après avoir créé les groupes)
+
+# Clé de service Firebase — NE JAMAIS COMMITER
+tests/serviceAccountKey.json
+serviceAccountKey.json

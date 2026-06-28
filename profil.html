@@ -2,8 +2,17 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impact Rating — Mon Profil</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mon Petit Match — Mon Profil</title>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0A0A12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mon Petit Match">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
     <link rel="stylesheet" href="css/profil.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +24,7 @@
     <nav class="profil-nav">
         <div class="nav-inner">
             <a href="index.html" class="nav-logo">
-                <span>⚽</span> Impact Rating
+                <span>⚽</span> Mon Petit Match
             </a>
             <div class="nav-user" id="nav-user">
                 <img id="nav-avatar" src="" alt="" class="nav-avatar hidden">
@@ -84,7 +93,6 @@
                             <select id="f-profil">
                                 <option value="">-- Choisir --</option>
                                 <option value="Défensif">Défensif</option>
-                                <option value="Box-to-box">Box-to-box</option>
                                 <option value="Offensif">Offensif</option>
                             </select>
                         </div>
@@ -163,7 +171,8 @@
     </div>
 
     <script type="module">
-        import { requireAuth, getUserProfile, updateUserProfile, deconnecter } from './js/auth.js';
+        import { requireAuth, getUserProfile, deconnecter } from './js/auth.js';
+        import { updateMonProfil } from './js/db.js';
         import { db, collection, getDocs, addDoc, query, where, doc, setDoc, getDoc, COLLECTIONS, escapeHtml } from './js/firebase-config.js';
 
         let currentUser = null;
@@ -255,7 +264,7 @@
             btn.textContent = '...';
 
             try {
-                await updateUserProfile(currentUser.uid, {
+                await updateMonProfil(currentUser.uid, {
                     displayName: prenom,
                     position,
                     profilMilieu: profilMilieu || null,
@@ -571,5 +580,6 @@
 
         init();
     </script>
+    <script src="/js/pwa.js"></script>
 </body>
 </html>

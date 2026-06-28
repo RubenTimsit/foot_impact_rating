@@ -1,167 +1,383 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impact Rating — Gérez votre foot entre amis</title>
-    <link rel="stylesheet" href="css/landing.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mon Petit Match — Gérez votre foot entre amis</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0A12">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mon Petit Match">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ── Overrides spécifiques à cette landing minimaliste ── */
+    .landing-hero {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: max(5rem, calc(env(safe-area-inset-top) + 4rem)) 1.5rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .landing-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(46,204,113,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .hero-logo-icon {
+      font-size: 3rem;
+      filter: drop-shadow(0 0 20px rgba(46,204,113,0.5));
+    }
+    .hero-app-name {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #f0f6fc;
+      letter-spacing: -0.02em;
+    }
+    .hero-tagline {
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: #f0f6fc;
+      margin-bottom: 1.25rem;
+      max-width: 600px;
+    }
+    .hero-tagline .hl { color: #2ecc71; }
+    .hero-desc {
+      font-size: 1.05rem;
+      color: #8b949e;
+      max-width: 480px;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+    .hero-cta-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn-cta-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.9rem 2rem;
+      background: #2ecc71;
+      color: #fff;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      box-shadow: 0 4px 24px rgba(46,204,113,0.3);
+    }
+    .btn-cta-main:hover { background: #27ae60; transform: translateY(-2px); }
+    .btn-cta-login {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.9rem 2rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 50px;
+      color: #f0f6fc;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-cta-login:hover { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.04); }
+
+    /* Features grid */
+    .features-wrap {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
+    .features-label {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #2ecc71;
+      margin-bottom: 2.5rem;
+    }
+    .features-grid-mini {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .feat-mini {
+      background: #161b22;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 1.25rem 1.1rem;
+      transition: border-color 0.2s;
+    }
+    .feat-mini:hover { border-color: rgba(46,204,113,0.25); }
+    .feat-mini-icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
+    .feat-mini-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.3rem; color: #f0f6fc; }
+    .feat-mini-desc { font-size: 0.82rem; color: #8b949e; line-height: 1.5; }
+
+    /* Install section */
+    .install-wrap {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 1.5rem 5rem;
+    }
+    .install-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #f0f6fc;
+      margin-bottom: 0.5rem;
+    }
+    .install-sub {
+      text-align: center;
+      color: #8b949e;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    .os-tabs {
+      display: flex;
+      background: #161b22;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      gap: 4px;
+    }
+    .os-tab {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: none;
+      background: none;
+      color: #8b949e;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .os-tab.active { background: #2ecc71; color: #fff; }
+
+    .install-steps-list { display: flex; flex-direction: column; gap: 0.85rem; }
+    .install-step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      background: #161b22;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+    }
+    .step-badge {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #2ecc71, #52e0a0);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.82rem;
+      flex-shrink: 0;
+    }
+    .step-badge.done { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+    .step-text strong { display: block; color: #f0f6fc; font-size: 0.9rem; margin-bottom: 0.2rem; }
+    .step-text span { color: #8b949e; font-size: 0.82rem; line-height: 1.5; }
+
+    /* Footer */
+    .landing-foot {
+      text-align: center;
+      padding: 2rem 1rem max(2rem, env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255,255,255,0.07);
+      color: #8b949e;
+      font-size: 0.82rem;
+    }
+    .landing-foot strong { color: #f0f6fc; }
+
+    @media (max-width: 480px) {
+      .hero-tagline { font-size: 1.9rem; }
+      .hero-cta-row { flex-direction: column; align-items: center; }
+      .btn-cta-main, .btn-cta-login { width: 100%; justify-content: center; }
+      .features-grid-mini { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
-<body>
+<body style="background:#0d1117;color:#f0f6fc;font-family:'Inter',sans-serif;">
 
-    <!-- NAV -->
-    <nav class="landing-nav">
-        <div class="nav-inner">
-            <a href="index.html" class="nav-logo">
-                <span class="logo-icon">⚽</span>
-                <span>Impact Rating</span>
-            </a>
-            <div class="nav-actions">
-                <a href="login.html" class="btn-ghost">Se connecter</a>
-                <a href="login.html?mode=register" class="btn-cta">Commencer gratuitement</a>
-            </div>
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <section class="landing-hero">
+    <div class="hero-logo-wrap">
+      <span class="hero-logo-icon">⚽</span>
+      <span class="hero-app-name">Mon Petit Match</span>
+    </div>
+
+    <h1 class="hero-tagline">
+      Ton foot entre amis,<br><span class="hl">enfin organisé</span>
+    </h1>
+
+    <p class="hero-desc">
+      Classement ELO, inscriptions hebdo, synergies entre joueurs — 
+      tout ce qu'il faut pour gérer vos matchs du vendredi.
+    </p>
+
+    <div class="hero-cta-row">
+      <a href="#installer" class="btn-cta-main">📲 Installer l'app</a>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ──────────────────────────────────────────── -->
+  <div class="features-wrap">
+    <div class="features-label">Ce que tu peux faire</div>
+    <div class="features-grid-mini">
+      <div class="feat-mini">
+        <div class="feat-mini-icon">🏆</div>
+        <div class="feat-mini-title">Classement ELO</div>
+        <div class="feat-mini-desc">Rating qui évolue après chaque match, victoire ou défaite.</div>
+      </div>
+      <div class="feat-mini">
+        <div class="feat-mini-icon">📅</div>
+        <div class="feat-mini-title">Inscription hebdo</div>
+        <div class="feat-mini-desc">L'admin ouvre les places, tu t'inscris en un clic.</div>
+      </div>
+      <div class="feat-mini">
+        <div class="feat-mini-icon">🤝</div>
+        <div class="feat-mini-title">Synergies</div>
+        <div class="feat-mini-desc">Découvre qui forme les meilleures paires sur le terrain.</div>
+      </div>
+      <div class="feat-mini">
+        <div class="feat-mini-icon">👥</div>
+        <div class="feat-mini-title">Multi-groupes</div>
+        <div class="feat-mini-desc">Rejoins plusieurs groupes avec chacun leur propre classement.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INSTALLER L'APP ───────────────────────────────────── -->
+  <div class="install-wrap" id="installer">
+    <h2 class="install-title">Installer l'application</h2>
+    <p class="install-sub">Ajoute l'app à ton écran d'accueil pour y accéder comme une vraie application — gratuit, sans passer par un store.</p>
+
+    <div class="os-tabs">
+      <button class="os-tab active" onclick="switchTab('android')">🤖 Android</button>
+      <button class="os-tab" onclick="switchTab('iphone')">🍎 iPhone</button>
+    </div>
+
+    <!-- Android -->
+    <div class="install-steps-list" id="tab-android">
+      <div class="install-step-row">
+        <div class="step-badge">1</div>
+        <div class="step-text">
+          <strong>Ouvre Chrome</strong>
+          <span>Ouvre cette page dans <b>Google Chrome</b> sur ton téléphone Android.</span>
         </div>
-    </nav>
-
-    <!-- HERO -->
-    <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-content">
-            <div class="hero-badge">Nouveau — Inscription hebdo en ligne</div>
-            <h1>Gérez votre foot<br><span class="highlight">entre amis</span></h1>
-            <p class="hero-sub">
-                Classement en temps réel, synergies entre joueurs, inscription au match de la semaine —
-                tout ce qu'il faut pour organiser votre foot du vendredi.
-            </p>
-            <div class="hero-btns">
-                <a href="login.html?mode=register" class="btn-primary-lg">Créer mon compte</a>
-                <a href="login.html" class="btn-outline-lg">Se connecter</a>
-            </div>
+      </div>
+      <div class="install-step-row">
+        <div class="step-badge">2</div>
+        <div class="step-text">
+          <strong>Menu ⋮</strong>
+          <span>Appuie sur les <b>3 points</b> en haut à droite de Chrome.</span>
         </div>
-        <div class="hero-visual">
-            <div class="floating-card card-1">
-                <div class="fc-label">Meilleur joueur</div>
-                <div class="fc-name">Lionel M.</div>
-                <div class="fc-rating">1 284 <span>IR</span></div>
-            </div>
-            <div class="floating-card card-2">
-                <div class="fc-label">Match vendredi</div>
-                <div class="fc-spots">8 / 10 inscrits</div>
-                <div class="fc-bar"><div class="fc-bar-fill" style="width:80%"></div></div>
-            </div>
-            <div class="floating-card card-3">
-                <div class="fc-label">Meilleure synergie</div>
-                <div class="fc-pair">Ruben + David</div>
-                <div class="fc-score">⚡ 87%</div>
-            </div>
-            <div class="pitch-visual">
-                <div class="pitch-lines"></div>
-                <div class="pitch-center"></div>
-            </div>
+      </div>
+      <div class="install-step-row">
+        <div class="step-badge">3</div>
+        <div class="step-text">
+          <strong>Ajouter à l'écran d'accueil</strong>
+          <span>Appuie sur <b>"Ajouter à l'écran d'accueil"</b> puis confirme.</span>
         </div>
-    </section>
-
-    <!-- FEATURES -->
-    <section class="features">
-        <div class="section-inner">
-            <div class="section-label">Fonctionnalités</div>
-            <h2>Tout ce dont vous avez besoin</h2>
-            <p class="section-sub">Un seul outil pour organiser, analyser et profiter de votre foot.</p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🏆</div>
-                    <h3>Impact Rating</h3>
-                    <p>Un classement ELO-style qui évolue après chaque match. Victoires, défaites, présence — tout compte.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Synergies</h3>
-                    <p>Découvrez quels joueurs forment les meilleures paires et trios. Le système calcule automatiquement la chimie entre joueurs.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3>Inscription hebdo</h3>
-                    <p>L'admin ouvre les inscriptions, les joueurs confirment leur présence. Liste d'attente automatique si complet.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚖️</div>
-                    <h3>Équipes équilibrées</h3>
-                    <p>Génération automatique des équipes basée sur les ratings et les synergies pour des matchs serrés.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Stats en temps réel</h3>
-                    <p>Classement mis à jour après chaque match. Historique complet, évolution du rating, V/N/D par joueur.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
-                    <h3>Multi-groupes</h3>
-                    <p>Rejoignez plusieurs groupes, chacun avec son propre classement, ses matchs et son admin.</p>
-                </div>
-            </div>
+      </div>
+      <div class="install-step-row">
+        <div class="step-badge done">✓</div>
+        <div class="step-text">
+          <strong>C'est prêt !</strong>
+          <span>L'icône <b>Mon Petit Match</b> apparaît sur ton bureau. Ouvre-la directement.</span>
         </div>
-    </section>
+      </div>
+    </div>
 
-    <!-- HOW IT WORKS -->
-    <section class="how-it-works">
-        <div class="section-inner">
-            <div class="section-label">Simple et rapide</div>
-            <h2>Comment ça marche</h2>
-
-            <div class="steps">
-                <div class="step">
-                    <div class="step-num">1</div>
-                    <div class="step-content">
-                        <h3>Créer un compte</h3>
-                        <p>Connectez-vous avec Google ou créez un compte email. En 30 secondes c'est fait.</p>
-                    </div>
-                </div>
-                <div class="step-arrow">→</div>
-                <div class="step">
-                    <div class="step-num">2</div>
-                    <div class="step-content">
-                        <h3>Rejoindre un groupe</h3>
-                        <p>Entrez le code à 6 lettres donné par votre admin. Il valide votre arrivée.</p>
-                    </div>
-                </div>
-                <div class="step-arrow">→</div>
-                <div class="step">
-                    <div class="step-num">3</div>
-                    <div class="step-content">
-                        <h3>Jouer et progresser</h3>
-                        <p>Inscrivez-vous aux matchs hebdo, suivez votre rating, montez au classement.</p>
-                    </div>
-                </div>
-            </div>
+    <!-- iPhone -->
+    <div class="install-steps-list" id="tab-iphone" style="display:none;">
+      <div class="install-step-row">
+        <div class="step-badge">1</div>
+        <div class="step-text">
+          <strong>Ouvre Safari</strong>
+          <span>Ouvre cette page dans <b>Safari</b> sur ton iPhone (pas Chrome).</span>
         </div>
-    </section>
-
-    <!-- CTA FINAL -->
-    <section class="cta-section">
-        <div class="section-inner">
-            <h2>Prêt à commencer ?</h2>
-            <p>Créez votre compte gratuitement et rejoignez votre groupe dès aujourd'hui.</p>
-            <a href="login.html?mode=register" class="btn-primary-lg">Créer mon compte gratuitement</a>
+      </div>
+      <div class="install-step-row">
+        <div class="step-badge">2</div>
+        <div class="step-text">
+          <strong>Bouton Partager ⬆</strong>
+          <span>Appuie sur l'icône <b>Partager</b> (carré avec une flèche) en bas de Safari.</span>
         </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="landing-footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <span class="logo-icon">⚽</span>
-                <span>Impact Rating</span>
-            </div>
-            <p class="footer-copy">&copy; 2026 Impact Rating — Fait avec passion par Ruben</p>
+      </div>
+      <div class="install-step-row">
+        <div class="step-badge">3</div>
+        <div class="step-text">
+          <strong>Sur l'écran d'accueil</strong>
+          <span>Fais défiler et appuie sur <b>"Sur l'écran d'accueil"</b>, puis "Ajouter".</span>
         </div>
-    </footer>
+      </div>
+      <div class="install-step-row">
+        <div class="step-badge done">✓</div>
+        <div class="step-text">
+          <strong>C'est prêt !</strong>
+          <span>L'icône <b>Mon Petit Match</b> apparaît sur ton bureau. Ouvre-la directement.</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <script type="module">
-        import { requireGuest } from './js/auth.js';
-        requireGuest();
-    </script>
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer class="landing-foot">
+    <strong>⚽ Mon Petit Match</strong><br>
+    Fait avec passion · 2026
+  </footer>
+
+  <script src="/js/pwa.js"></script>
+  <script>
+    // Si l'app est déjà installée → aller directement à l'app
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+      window.location.replace('/app');
+    }
+
+    // OS detection → bon onglet par défaut
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isIOS) switchTab('iphone');
+
+    function switchTab(tab) {
+      document.querySelectorAll('.os-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.install-steps-list').forEach(w => w.style.display = 'none');
+      document.querySelector(`[onclick*="${tab}"]`).classList.add('active');
+      document.getElementById(`tab-${tab}`).style.display = 'flex';
+    }
+
+    // Scroll vers install si URL contient #installer
+    if (location.hash === '#installer') {
+      setTimeout(() => document.getElementById('installer')?.scrollIntoView({ behavior: 'smooth' }), 200);
+    }
+  </script>
+
 </body>
 </html>

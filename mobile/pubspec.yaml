@@ -1,0 +1,42 @@
+name: impact_rating
+description: Impact Rating — Gestion de groupes de football avec classement ELO.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.4
+  cloud_firestore: ^5.6.0
+  firebase_messaging: ^15.1.5
+  google_sign_in: ^6.2.2
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # UI
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.4.1
+
+  # Utils
+  intl: ^0.19.0
+  shared_preferences: ^2.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

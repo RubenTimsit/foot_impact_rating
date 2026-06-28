@@ -30,9 +30,75 @@
       "deploy.bat",
       "deploy.sh",
       "setup-groupes.html",
-      "js/admin.js"
+      "mobile/**",
+      "generate-icons.html",
+      "tests/**",
+      "ISSUES.md",
+      "GUIDE_SPA.md",
+      "profil.html",
+      "groupe.html",
+      "admin-groupe.html",
+      "super-admin.html",
+      "css/profil.css",
+      "css/groupe.css",
+      "js/app.js",
+      "js/admin.js",
+      "js/synergies.js",
+      "js/historique.js",
+      "js/inscription.js",
+      "js/team-balancer.js",
+      "js/algorithm.js",
+      "js/code-modal.js",
+      "js/confirm-modal.js",
+      "js/groupe-manager.js"
+    ],
+    "rewrites": [
+      {
+        "source": "/app/**",
+        "destination": "/app.html"
+      }
     ],
     "cleanUrls": true,
-    "trailingSlash": false
+    "trailingSlash": false,
+    "headers": [
+      {
+        "source": "/sw.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+          { "key": "Service-Worker-Allowed", "value": "/" }
+        ]
+      },
+      {
+        "source": "/manifest.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=3600" },
+          { "key": "Content-Type", "value": "application/manifest+json" }
+        ]
+      },
+      {
+        "source": "/icons/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=604800" }
+        ]
+      },
+      {
+        "source": "/css/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+        ]
+      },
+      {
+        "source": "/js/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+        ]
+      },
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+        ]
+      }
+    ]
   }
 }

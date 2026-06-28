@@ -1,19 +1,22 @@
 // ==================== SYSTÈME DE SYNERGIES ====================
 
+// Constantes de pondération
+const WIN_BONUS    = 2;     // Points gagnés par victoire
+const LOSS_PENALTY = 1.5;   // Points perdus par défaite
+const DIFF_FACTOR  = 0.1;   // Bonus/malus par but d'écart (÷10)
+
 /**
- * Crée ou met à jour une synergie entre deux joueurs
- * @param {Object} synergiesExistantes - Object contenant les synergies existantes
- * @param {string} joueurId1 - ID du premier joueur
- * @param {string} joueurId2 - ID du deuxième joueur
+ * Crée ou met à jour une synergie entre deux joueurs.
+ * @param {Object} synergiesExistantes - Synergies existantes
+ * @param {string} joueurId1
+ * @param {string} joueurId2
  * @param {string} resultat - 'victoire', 'nul', ou 'defaite'
- * @param {number} scoreDiff - Différence de score (positif si victoire)
- * @returns {Object} Synergies mises à jour
+ * @param {number} scoreDiff - Écart de score absolu
+ * @param {number} poids - Poids du sous-match (0–1, défaut 1 = match entier)
  */
-export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, resultat, scoreDiff = 0) {
-    // Créer une clé unique (toujours dans le même ordre)
+export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, resultat, scoreDiff = 0, poids = 1) {
     const cle = [joueurId1, joueurId2].sort().join('-');
-    
-    // Initialiser si n'existe pas
+
     if (!synergiesExistantes[cle]) {
         synergiesExistantes[cle] = {
             joueur1: joueurId1,
@@ -25,25 +28,25 @@ export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, r
             defaites: 0
         };
     }
-    
-    const synergie = synergiesExistantes[cle];
-    
-    // Mettre à jour les statistiques
-    synergie.matchsEnsemble += 1;
-    
+
+    const syn = synergiesExistantes[cle];
+
+    // matchsEnsemble pondéré : 1 soirée complète = 1.0 au total
+    syn.matchsEnsemble = Math.round((syn.matchsEnsemble + poids) * 100) / 100;
+
     if (resultat === 'victoire') {
-        synergie.victoires += 1;
-        synergie.valeur += 1 + (scoreDiff / 20); // Bonus si large victoire
+        syn.victoires += 1;
+        syn.valeur += (WIN_BONUS + scoreDiff * DIFF_FACTOR) * poids;
     } else if (resultat === 'nul') {
-        synergie.nuls += 1;
+        syn.nuls += 1;
+        // Nul ne modifie pas la valeur
     } else if (resultat === 'defaite') {
-        synergie.defaites += 1;
-        synergie.valeur -= 1;
+        syn.defaites += 1;
+        syn.valeur -= (LOSS_PENALTY + scoreDiff * DIFF_FACTOR) * poids;
     }
-    
-    // Arrondir la valeur
-    synergie.valeur = Math.round(synergie.valeur * 10) / 10;
-    
+
+    syn.valeur = Math.round(syn.valeur * 100) / 100;
+
     return synergiesExistantes;
 }
 
@@ -55,8 +58,7 @@ export function mettreAJourSynergie(synergiesExistantes, joueurId1, joueurId2, r
  * @param {number} scoreDiff - Différence de score
  * @returns {Object} Synergies mises à jour
  */
-export function mettreAJourSynergiesEquipe(synergiesExistantes, equipe, resultat, scoreDiff = 0) {
-    // Pour chaque paire de joueurs dans l'équipe
+export function mettreAJourSynergiesEquipe(synergiesExistantes, equipe, resultat, scoreDiff = 0, poids = 1) {
     for (let i = 0; i < equipe.length; i++) {
         for (let j = i + 1; j < equipe.length; j++) {
             mettreAJourSynergie(
@@ -64,11 +66,11 @@ export function mettreAJourSynergiesEquipe(synergiesExistantes, equipe, resultat
                 equipe[i],
                 equipe[j],
                 resultat,
-                scoreDiff
+                scoreDiff,
+                poids
             );
         }
     }
-    
     return synergiesExistantes;
 }
 

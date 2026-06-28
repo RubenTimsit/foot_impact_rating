@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Générateur d'icônes PWA — Mon Petit Match</title>
+    <style>
+        body { font-family: sans-serif; background: #111; color: #fff; padding: 30px; }
+        button { background: #2ECC71; color: #000; border: none; padding: 14px 28px;
+                 border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 700;
+                 margin-top: 20px; display: block; }
+        #status { margin-top: 20px; color: #2ECC71; font-size: 14px; }
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+    <h2>🎨 Générateur d'icônes PWA — Mon Petit Match</h2>
+    <p>Clique sur le bouton pour générer et télécharger toutes les icônes à partir du <strong>logo.png</strong>.<br>
+       Place ensuite les fichiers dans le dossier <code>icons/</code> à la racine du projet.</p>
+    <input type="file" id="logoInput" accept="image/png,image/jpeg,image/svg+xml" style="margin-bottom:10px;">
+    <br>
+    <button onclick="generateAll()">⬇️ Générer toutes les icônes</button>
+    <div id="status"></div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const SIZES = [72, 96, 128, 144, 152, 192, 384, 512];
+        const BG = '#0A0A12';
+
+        function loadImage(src) {
+            return new Promise((res, rej) => {
+                const img = new Image();
+                img.onload = () => res(img);
+                img.onerror = rej;
+                img.src = src;
+            });
+        }
+
+        async function getLogoImage() {
+            const file = document.getElementById('logoInput').files[0];
+            if (file) {
+                return loadImage(URL.createObjectURL(file));
+            }
+            // Fallback: essaie de charger logo.png depuis le même dossier
+            return loadImage('logo.png');
+        }
+
+        function drawIcon(ctx, img, size, maskable = false) {
+            const pad = maskable ? Math.round(size * 0.12) : 0;
+            const inner = size - pad * 2;
+
+            ctx.fillStyle = BG;
+            ctx.fillRect(0, 0, size, size);
+
+            // Dessine le logo centré avec padding
+            ctx.drawImage(img, pad, pad, inner, inner);
+        }
+
+        async function generateAll() {
+            const status = document.getElementById('status');
+            status.textContent = 'Chargement du logo…';
+
+            let logo;
+            try {
+                logo = await getLogoImage();
+            } catch {
+                status.textContent = '❌ Logo introuvable. Sélectionne logo.png via le sélecteur de fichier.';
+                return;
+            }
+
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            let count = 0;
+            const total = SIZES.length + 2; // +2 for maskable 192 & 512
+
+            for (const size of SIZES) {
+                canvas.width = size;
+                canvas.height = size;
+                ctx.clearRect(0, 0, size, size);
+                drawIcon(ctx, logo, size, false);
+                await download(canvas, `icon-${size}.png`);
+
+                if (size === 192 || size === 512) {
+                    ctx.clearRect(0, 0, size, size);
+                    drawIcon(ctx, logo, size, true);
+                    await download(canvas, `icon-maskable-${size}.png`);
+                }
+
+                count++;
+                status.textContent = `Génération en cours… ${count}/${total}`;
+                await sleep(100);
+            }
+
+            status.textContent = `✅ ${total} icônes générées ! Place-les dans le dossier icons/ du projet.`;
+        }
+
+        function download(canvas, filename) {
+            return new Promise(resolve => {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    setTimeout(resolve, 50);
+                }, 'image/png');
+            });
+        }
+
+        function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+    </script>
+</body>
+</html>

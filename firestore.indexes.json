@@ -7,6 +7,46 @@
         { "fieldPath": "statut", "order": "ASCENDING" },
         { "fieldPath": "dateInscription", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "matchs_semaine",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "dateOuvertureInscription", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matchs_semaine",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "dateMatch", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "groupes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "configHebdo.actif", "order": "ASCENDING" },
+        { "fieldPath": "configHebdo.recurring", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matchs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "voteClos", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matchs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "dateCreation", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

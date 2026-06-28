@@ -1,20 +1,31 @@
 {
   "name": "foot-tests",
   "private": true,
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "test": "jest --runInBand --forceExit",
-    "test:watch": "jest --watch --runInBand"
+    "test:watch": "jest --watch --runInBand",
+    "test:unit": "jest --runInBand --forceExit --testPathPattern=\"(rating|synergy|store|utils)\\.test\\.js\"",
+    "test:firebase": "jest --runInBand --forceExit --testPathPattern=\"(inscription|groupe|match-validation)\\.test\\.js\"",
+    "seed": "node seed-prod.js",
+    "seed:clean": "node seed-prod.js --clean",
+    "seed:emulator": "cross-env FIRESTORE_EMULATOR_HOST=localhost:8080 node seed-prod.js",
+    "test:scenarios": "jest --runInBand --forceExit --testPathPattern=\"scenarios\\.test\\.js\" --testTimeout=30000"
   },
   "dependencies": {
     "firebase-admin": "^12.0.0"
   },
   "devDependencies": {
-    "jest": "^29.0.0"
+    "cross-env": "^10.1.0",
+    "jest": "^29.0.0",
+    "pdfkit": "^0.18.0",
+    "puppeteer": "^25.1.0"
   },
   "jest": {
     "testEnvironment": "node",
-    "testTimeout": 15000,
+    "testTimeout": 30000,
     "verbose": true
   }
 }

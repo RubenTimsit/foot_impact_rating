@@ -293,6 +293,7 @@ describe('Inscriptions simultanées — race conditions', () => {
     test('20 joueurs simultanés pour 5 places → exactement 5 confirmés', async () => {
         // 50 joueurs dépasse le plafond de concurrence de l'émulateur même avec retry.
         // 20 joueurs pour 5 places reste un vrai stress test (ratio 4:1).
+        // Timeout élevé car l'émulateur local gère la concurrence plus lentement que la prod.
         const MAX = 5;
         const NB_JOUEURS = 20;
         const { groupeId, matchId } = await creerGroupeEtMatch(db, { maxJoueurs: MAX });
@@ -320,7 +321,7 @@ describe('Inscriptions simultanées — race conditions', () => {
         expect(inscriptions).toHaveLength(NB_JOUEURS);
         expect(inscriptions.filter(i => i.statut === 'confirmé')).toHaveLength(MAX);
         expect(inscriptions.filter(i => i.statut === 'attente')).toHaveLength(NB_JOUEURS - MAX);
-    }, 45_000);
+    }, 90_000);
 
     test('désistements simultanés → confirmedCount cohérent avec les docs', async () => {
         const MAX = 2;

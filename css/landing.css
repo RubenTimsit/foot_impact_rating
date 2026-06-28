@@ -30,6 +30,7 @@ body {
     width: 100%;
     z-index: 100;
     padding: 1rem 0;
+    padding-top: max(1rem, env(safe-area-inset-top));
     background: rgba(13,17,23,0.85);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
@@ -365,9 +366,231 @@ body {
     margin-bottom: 2rem;
 }
 
+/* ==================== INSTALL SECTION ==================== */
+.install-section {
+    background: var(--dark-2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.install-tabs {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+}
+
+.install-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.5rem;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.install-tab.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+}
+
+.install-tab:not(.active):hover {
+    border-color: rgba(255,255,255,0.2);
+    color: var(--light);
+}
+
+.tab-icon { font-size: 1.1rem; }
+
+.install-steps-wrap {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3rem;
+    align-items: start;
+}
+
+.install-steps-wrap.hidden { display: none; }
+
+.install-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.install-step {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    transition: var(--transition);
+}
+
+.install-step:hover {
+    border-color: rgba(46,204,113,0.25);
+}
+
+.install-step-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: rgba(46,204,113,0.12);
+    border: 1px solid rgba(46,204,113,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--green);
+}
+
+.install-step:last-child .install-step-icon {
+    background: rgba(46,204,113,0.2);
+    border-color: var(--green);
+}
+
+.install-step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.install-step-body strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--light);
+}
+
+.install-step-body span {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* ── Phone Preview ── */
+.install-phone-preview {
+    display: flex;
+    justify-content: center;
+}
+
+.phone-frame {
+    width: 220px;
+    background: #1a1a2e;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 28px;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.phone-screen {
+    background: #0d1117;
+    border-radius: 18px;
+    overflow: hidden;
+    min-height: 240px;
+}
+
+/* Android Chrome */
+.phone-chrome-bar {
+    background: #2d2d3a;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.phone-url {
+    font-size: 10px;
+    color: #888;
+    background: #1a1a2e;
+    padding: 4px 8px;
+    border-radius: 6px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.phone-dots {
+    color: #888;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.phone-menu {
+    padding: 8px 0;
+}
+
+.phone-menu-item {
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #aaa;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Safari */
+.phone-safari-bar {
+    background: #2d2d3a;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.phone-share-btn {
+    width: 28px;
+    height: 28px;
+    background: #3a3a4a;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #4a9eff;
+    flex-shrink: 0;
+}
+
+.phone-share-sheet {
+    padding: 6px 0;
+}
+
+.phone-share-row {
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.phone-share-ico {
+    font-size: 14px;
+    width: 22px;
+    text-align: center;
+}
+
+.highlight-item {
+    color: var(--green) !important;
+    font-weight: 700 !important;
+    background: rgba(46,204,113,0.08);
+}
+
 /* ==================== FOOTER ==================== */
 .landing-footer {
     padding: 2rem;
+    padding-bottom: max(2rem, calc(env(safe-area-inset-bottom) + 1rem));
     border-top: 1px solid var(--border);
 }
 
@@ -392,19 +615,68 @@ body {
 .footer-copy { color: var(--text-muted); font-size: 0.9rem; }
 
 /* ==================== RESPONSIVE ==================== */
+
+/* ── Tablette ── */
+@media (max-width: 1024px) {
+    .hero { gap: 2.5rem; padding: 8rem 1.5rem 4rem; }
+    .features-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+}
+
+/* ── Mobile large ── */
 @media (max-width: 768px) {
+    /* Nav : cacher les boutons secondaires, garder seulement le CTA */
+    .btn-ghost[href="#installer"],
+    .btn-ghost[href="login.html"] { display: none; }
+    .nav-inner { padding: 0 1rem; }
+
+    /* Hero */
     .hero {
         grid-template-columns: 1fr;
-        padding: 6rem 1.5rem 3rem;
+        padding: 6rem 1.25rem 3rem;
         text-align: center;
-        gap: 3rem;
+        gap: 2rem;
+        min-height: auto;
     }
-    .hero-sub { margin: 0 auto 2rem; }
-    .hero-btns { justify-content: center; }
-    .hero-visual { height: 280px; }
-    .card-1 { left: 0; }
-    .card-2 { right: 0; }
-    .steps { flex-direction: column; }
-    .step-arrow { transform: rotate(90deg); }
-    .footer-inner { flex-direction: column; text-align: center; }
+    .hero-sub { margin: 0 auto 2rem; max-width: 100%; }
+    .hero-btns { justify-content: center; flex-direction: column; align-items: center; }
+    .btn-primary-lg, .btn-outline-lg { width: 100%; max-width: 320px; text-align: center; }
+    .hero-visual { height: 240px; }
+    .card-1 { left: 0; top: 5%; }
+    .card-2 { right: 0; top: 42%; }
+    .card-3 { bottom: 5%; left: 5%; }
+    .floating-card { min-width: 140px; padding: 0.75rem 1rem; }
+
+    /* Sections */
+    .section-inner { padding: 3rem 1.25rem; }
+    .section-inner h2 { font-size: clamp(1.5rem, 5vw, 2rem); }
+    .section-sub { font-size: 1rem; max-width: 100%; }
+    .features-grid { grid-template-columns: 1fr; }
+
+    /* Steps */
+    .steps { flex-direction: column; align-items: stretch; }
+    .step { min-width: 0; }
+    .step-arrow { transform: rotate(90deg); align-self: center; }
+
+    /* Footer */
+    .footer-inner { flex-direction: column; text-align: center; gap: 0.5rem; }
+
+    /* Install section */
+    .install-steps-wrap { grid-template-columns: 1fr; }
+    .install-phone-preview { display: none; }
+    .install-tabs { flex-wrap: wrap; }
+    .install-tab { flex: 1; justify-content: center; }
+}
+
+/* ── Mobile petit ── */
+@media (max-width: 480px) {
+    .hero { padding: 5.5rem 1rem 2.5rem; }
+    .hero-badge { font-size: 0.78rem; }
+    .hero h1 { font-size: clamp(2rem, 8vw, 2.5rem); }
+    .hero-sub { font-size: 0.95rem; }
+    .nav-inner { padding: 0 0.75rem; }
+    .btn-cta { padding: 0.5rem 1rem; font-size: 0.88rem; }
+    .section-inner { padding: 2.5rem 1rem; }
+    .feature-card { padding: 1.25rem; }
+    .install-step { padding: 0.9rem 1rem; }
+    .install-step-icon { width: 34px; height: 34px; font-size: 0.85rem; }
 }

@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mémo — Système de Rating ELO</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left:'$$',right:'$$',display:true},
+      {left:'$',right:'$',display:false}
+    ]
+  });"></script>
+<style>
+  :root {
+    --accent:  #2563eb;
+    --green:   #16a34a;
+    --red:     #dc2626;
+    --orange:  #ea580c;
+    --dark:    #0f172a;
+    --gray:    #64748b;
+    --light:   #f8fafc;
+    --border:  #e2e8f0;
+    --blue-bg: #eff6ff;
+    --blue-bar:#bfdbfe;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    color: var(--dark);
+    background: white;
+    line-height: 1.55;
+  }
+
+  /* ── PAGE BREAKS ── */
+  .page { page-break-after: always; padding: 22mm 20mm 18mm; min-height: 297mm; }
+  .page:last-child { page-break-after: auto; }
+
+  /* ── COVER ── */
+  .cover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 297mm;
+    padding: 20mm;
+  }
+  .cover-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #93c5fd;
+    font-size: 9pt;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 99px;
+    margin-bottom: 24px;
+  }
+  .cover h1 { font-size: 30pt; font-weight: 800; line-height: 1.15; margin-bottom: 14px; }
+  .cover h1 span { color: #60a5fa; }
+  .cover .sub { font-size: 14pt; color: #94a3b8; margin-bottom: 32px; }
+  .cover-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 440px;
+    margin-top: 32px;
+  }
+  .cover-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 14px 8px;
+  }
+  .cover-card .label { font-size: 8pt; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+  .cover-card .val   { font-size: 22pt; font-weight: 700; color: white; margin-top: 4px; }
+  .cover-meta { font-size: 9pt; color: #64748b; margin-top: 48px; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    background: var(--accent);
+    color: white;
+    font-size: 13pt;
+    font-weight: 700;
+    padding: 9px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    margin-top: 8px;
+  }
+
+  /* ── SUB TITLE ── */
+  .sub-title {
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sub-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* ── FORMULA BOX ── */
+  .formula-box {
+    background: var(--blue-bg);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 10pt;
+  }
+  .formula-box .katex-display { margin: 6px 0; }
+
+  /* ── INTUITIVE BOX ── */
+  .intuition-box {
+    background: #fefce8;
+    border-left: 4px solid #ca8a04;
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 10pt;
+  }
+  .intuition-box .title { font-weight: 700; color: #92400e; margin-bottom: 6px; font-size: 10pt; }
+
+  /* ── INFO / WARNING BOXES ── */
+  .box-green { background:#f0fdf4; border-left:4px solid var(--green); border-radius:0 6px 6px 0; padding:12px 16px; margin:10px 0; }
+  .box-red   { background:#fef2f2; border-left:4px solid var(--red);   border-radius:0 6px 6px 0; padding:12px 16px; margin:10px 0; }
+  .box-orange{ background:#fff7ed; border-left:4px solid var(--orange); border-radius:0 6px 6px 0; padding:12px 16px; margin:10px 0; }
+  .box-blue  { background:#eff6ff; border-left:4px solid var(--accent); border-radius:0 6px 6px 0; padding:12px 16px; margin:10px 0; }
+  .box-title { font-weight:700; margin-bottom:5px; font-size:10pt; }
+  .box-green .box-title { color: var(--green); }
+  .box-red   .box-title { color: var(--red); }
+  .box-orange .box-title{ color: var(--orange); }
+  .box-blue  .box-title { color: var(--accent); }
+
+  /* ── TABLES ── */
+  table { width:100%; border-collapse:collapse; font-size:9.5pt; margin:10px 0; }
+  thead tr { background:var(--dark); color:white; }
+  thead th { padding:8px 10px; text-align:left; font-weight:600; }
+  tbody tr:nth-child(even) { background:var(--light); }
+  tbody td { padding:7px 10px; border-bottom:1px solid var(--border); }
+  td.num  { text-align:right; font-variant-numeric: tabular-nums; }
+  td.center { text-align:center; }
+  td.pos  { color:var(--green); font-weight:700; }
+  td.neg  { color:var(--red);   font-weight:700; }
+  td.vic  { color:var(--green); font-weight:700; }
+  td.def  { color:var(--red);   font-weight:700; }
+
+  /* ── TEAM TABLE ── */
+  .teams-wrap { display:grid; grid-template-columns:1fr 80px 1fr; gap:0; margin:12px 0; }
+  .team-col { }
+  .team-header {
+    padding:8px 10px;
+    font-weight:700;
+    color:white;
+    font-size:10pt;
+    text-align:center;
+  }
+  .team-header.a { background:var(--accent); border-radius:6px 0 0 0; }
+  .team-header.b { background:var(--red);    border-radius:0 6px 0 0; }
+  .score-header  { background:var(--dark); color:white; font-weight:700; font-size:10pt; text-align:center; padding:8px 4px; }
+  .team-row { display:flex; justify-content:space-between; align-items:center; padding:5px 10px; font-size:9pt; border-bottom:1px solid var(--border); }
+  .team-row:nth-child(even) { background:var(--light); }
+  .team-row .rating { font-weight:600; font-size:8.5pt; }
+  .team-row .rating.up   { color:var(--green); }
+  .team-row .rating.down { color:var(--red); }
+  .score-cell { display:flex; align-items:center; justify-content:center; height:100%; }
+  .score-big { font-size:30pt; font-weight:800; line-height:1; }
+  .score-big.win { color:var(--green); }
+  .score-big.lose{ color:var(--red); }
+  .score-sep { font-size:18pt; color:var(--gray); margin:0 4px; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow { display:flex; align-items:center; gap:0; margin:14px 0; }
+  .flow-box {
+    flex:1;
+    border-radius:8px;
+    padding:12px 10px;
+    text-align:center;
+    color:white;
+    font-size:9pt;
+  }
+  .flow-box strong { display:block; font-size:10pt; margin-bottom:4px; }
+  .flow-box .sub   { font-size:8pt; opacity:0.85; }
+  .flow-box.blue   { background:var(--accent); }
+  .flow-box.orange { background:var(--orange); }
+  .flow-box.green  { background:var(--green); }
+  .flow-arrow { color:var(--gray); font-size:18pt; padding:0 6px; flex-shrink:0; }
+
+  /* ── MISC ── */
+  p { margin-bottom:8px; }
+  ul { padding-left:20px; margin-bottom:8px; }
+  li { margin-bottom:4px; }
+  .mt { margin-top:14px; }
+  .tag-intuition { background:#fef9c3; color:#854d0e; border-radius:4px; padding:1px 7px; font-size:8pt; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  .tag-math { background:#dbeafe; color:#1e40af; border-radius:4px; padding:1px 7px; font-size:8pt; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  .highlight { background:#fef9c3; border-radius:3px; padding:0 3px; }
+  hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
+
+  @media print {
+    body { font-size: 10pt; }
+    .page { padding: 18mm 18mm 14mm; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 1 — COUVERTURE
+══════════════════════════════════════════════════════════ -->
+<div class="page cover">
+  <div class="cover-badge">Impact Rating App</div>
+  <h1>Mémo — Système de<br><span>Rating ELO</span></h1>
+  <p class="sub">ROSLAN FC &nbsp;·&nbsp; Soirée du 04/06/2026</p>
+  <p style="color:#94a3b8;font-size:10pt;">Match ID : m8eekUNj2Ei2HDljKNNS &nbsp;·&nbsp; 16 joueurs &nbsp;·&nbsp; Split 2/3 · 1/3</p>
+  <div class="cover-grid">
+    <div class="cover-card"><div class="label">K-Factor</div><div class="val">64</div></div>
+    <div class="cover-card"><div class="label">Rating base</div><div class="val">1 000</div></div>
+    <div class="cover-card"><div class="label">Joueurs</div><div class="val">16</div></div>
+  </div>
+  <div class="cover-meta">
+    Ce document explique le fonctionnement du système ELO de l'application,<br>
+    illustré avec les données réelles de la soirée Roslan FC du 04/06/2026.<br>
+    Les formules exactes et les exemples intuitifs sont présentés côte à côte.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 2 — C'EST QUOI L'ELO ?
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">1. C'est quoi le système ELO ? <span class="tag-intuition" style="float:right;margin-top:2px;">Intuition</span></div>
+
+  <div class="intuition-box">
+    <div class="title">🎮 L'analogie simple</div>
+    <p>Imagine que tu as un score dans un jeu vidéo. Si tu bats un joueur meilleur que toi, ton score monte beaucoup. Si tu bats un joueur nul, ça monte très peu. Et si tu perds contre quelqu'un de bien meilleur, ça descend très peu.</p>
+    <p><strong>C'est exactement ça l'ELO.</strong> Tout le monde démarre à <strong>1 000 points</strong>. Chaque match redistribue des points entre les deux équipes. Ce que l'une gagne, l'autre le perd — comme un échange.</p>
+  </div>
+
+  <div class="sub-title">Le principe fondamental</div>
+  <p>Après chaque match, le delta (variation) de rating d'un joueur dépend de <strong>deux choses</strong> :</p>
+  <ul>
+    <li><strong>Le résultat :</strong> victoire, nul ou défaite</li>
+    <li><strong>La probabilité attendue :</strong> si tout le monde s'attendait à ce que tu gagnes et que tu gagnes, tu ne gagnes presque rien. Si tu crées la surprise, tu gagnes beaucoup.</li>
+  </ul>
+
+  <div class="sub-title">La formule complète <span class="tag-math">Mathématiques</span></div>
+  <div class="formula-box">
+    $$\Delta r = K \cdot (S - E) \cdot M$$
+    <p style="margin-top:8px;font-size:9.5pt;">Avec :</p>
+    <ul style="font-size:9.5pt;margin-top:4px;">
+      <li>$K = 64$ &nbsp;— constante d'ajustement (vitesse d'évolution du classement)</li>
+      <li>$S$ &nbsp;— résultat réel : $1$ (victoire), $0.5$ (nul), $0$ (défaite)</li>
+      <li>$E$ &nbsp;— probabilité attendue de victoire (voir formule ci-dessous)</li>
+      <li>$M$ &nbsp;— multiplicateur d'écart de score (victoire large = gain amplifié)</li>
+    </ul>
+  </div>
+
+  <div class="sub-title">La probabilité attendue <span class="tag-math">Mathématiques</span></div>
+  <div class="formula-box">
+    $$E_A = \frac{1}{1 + 10^{(R_B - R_A)\,/\,400}}$$
+    <p style="margin-top:8px;font-size:9.5pt;">$R_A$ et $R_B$ sont les ratings moyens des équipes A et B.</p>
+  </div>
+
+  <div class="intuition-box">
+    <div class="title">💡 Lire cette formule sans maths</div>
+    <p>Si les deux équipes ont le <strong>même rating</strong> → probabilité = <strong>50/50</strong>. Si l'équipe A a 400 points de plus que B → probabilité de A de gagner = <strong>91%</strong>. Plus l'écart de rating est grand, plus on est sûr du résultat.</p>
+    <p style="margin-top:6px;">La division par 400 est un paramètre historique : il a été calibré pour que <strong>+200 pts de rating = environ 75% de chances de gagner</strong>.</p>
+  </div>
+
+  <div class="sub-title">Le multiplicateur de score <span class="tag-math">Mathématiques</span></div>
+  <div class="formula-box">
+    $$M = 1 + \frac{|S_A - S_B|}{6}$$
+    <p style="margin-top:8px;font-size:9.5pt;">$S_A$ et $S_B$ sont les buts marqués par chaque équipe.</p>
+  </div>
+
+  <div class="intuition-box">
+    <div class="title">💡 Pourquoi ce multiplicateur ?</div>
+    <p>Gagner 5-0 montre plus de maîtrise que gagner 2-1. Ce multiplicateur amplifie les gains/pertes en cas de victoire large :</p>
+    <ul>
+      <li>Match nul (0 buts d'écart) → $M = 1.0$ → gain normal</li>
+      <li>Écart de 3 buts → $M = 1.5$ → gain augmenté de 50%</li>
+      <li>Écart de 6 buts → $M = 2.0$ → gain doublé</li>
+    </ul>
+  </div>
+
+  <div class="sub-title">La propriété de somme nulle</div>
+  <div class="box-blue">
+    <div class="box-title">Ce que A gagne, B le perd</div>
+    <p>L'ELO est un <strong>jeu à somme nulle</strong> : le delta de A est toujours l'opposé du delta de B. Le total de rating dans le système reste constant. C'est une propriété mathématique garantie par la formule.</p>
+    <p style="margin-top:6px;">Démonstration : $E_A + E_B = 1$ (les probabilités se complètent à 1), donc $\Delta r_A = K(S_A - E_A)M$ et $\Delta r_B = K(S_B - E_B)M = K((1-S_A)-(1-E_A))M = -\Delta r_A$</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 3 — EXEMPLE SIMPLE 50/50
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">2. Exemple simple — Deux équipes au même niveau (split 50/50)</div>
+
+  <p>Voyons un exemple concret pour comprendre avant de passer au vrai match. Deux équipes de 5 joueurs, toutes à 1 000 pts, score final <strong>3-1</strong>.</p>
+
+  <div class="sub-title">Étape 1 — Probabilité attendue</div>
+  <div class="formula-box">
+    $$E_A = \frac{1}{1 + 10^{(1000 - 1000)\,/\,400}} = \frac{1}{1+1} = 0.5$$
+    <p style="font-size:9pt;margin-top:6px;">Ratings égaux → 50% de chances de chaque côté. Ça ne surprend personne.</p>
+  </div>
+
+  <div class="sub-title">Étape 2 — Multiplicateur de score</div>
+  <div class="formula-box">
+    $$M = 1 + \frac{|3 - 1|}{6} = 1 + \frac{2}{6} = 1.33$$
+  </div>
+
+  <div class="sub-title">Étape 3 — Delta ELO</div>
+  <div class="formula-box">
+    $$\Delta r_A \text{ (victoire)} = 64 \times (1 - 0.5) \times 1.33 = 64 \times 0.5 \times 1.33 \approx +\mathbf{43}\text{ pts}$$
+    $$\Delta r_B \text{ (défaite)} = 64 \times (0 - 0.5) \times 1.33 \approx -\mathbf{43}\text{ pts}$$
+  </div>
+
+  <table>
+    <thead><tr><th>Joueur</th><th>Équipe</th><th>Rating avant</th><th>Delta</th><th>Rating après</th><th>Résultat</th></tr></thead>
+    <tbody>
+      <tr><td>Ali</td><td>A</td><td class="num">1 000</td><td class="pos num">+43</td><td class="num">1 043</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Tom</td><td>A</td><td class="num">1 000</td><td class="pos num">+43</td><td class="num">1 043</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Max</td><td>B</td><td class="num">1 000</td><td class="neg num">-43</td><td class="num">957</td><td class="def">DÉFAITE</td></tr>
+      <tr><td>Leo</td><td>B</td><td class="num">1 000</td><td class="neg num">-43</td><td class="num">957</td><td class="def">DÉFAITE</td></tr>
+    </tbody>
+  </table>
+
+  <div class="intuition-box">
+    <div class="title">🎯 Ce qu'on retient</div>
+    <p>Avec des ratings égaux, la probabilité attendue est 0.5. Si tu gagnes, tu « surprends » à hauteur de <strong>0.5</strong> (résultat 1 - attendu 0.5). K=64, donc le delta de base est <strong>64 × 0.5 = 32 pts</strong>, amplifié par le score.</p>
+  </div>
+
+  <hr>
+
+  <div class="section-header">3. Exemple avec niveaux inégaux</div>
+  <p>Équipe A (rating moyen 1 200) contre Équipe B (rating moyen 800). Score : <strong>2-1</strong> (A gagne, comme prévu).</p>
+
+  <div class="formula-box">
+    $$E_A = \frac{1}{1 + 10^{(800 - 1200)\,/\,400}} = \frac{1}{1 + 10^{-1}} = \frac{1}{1+0.1} \approx 0.91$$
+    $$M = 1 + \frac{|2-1|}{6} \approx 1.17$$
+    $$\Delta r_A = 64 \times (1 - 0.91) \times 1.17 \approx +\mathbf{7}\text{ pts seulement !}$$
+    $$\Delta r_B = 64 \times (0 - 0.09) \times 1.17 \approx -\mathbf{7}\text{ pts}$$
+  </div>
+
+  <div class="intuition-box">
+    <div class="title">💡 L'équipe forte gagne très peu</div>
+    <p>A avait 91% de chances de gagner. En gagnant, elle n'a « surpris » personne (résultat 1 - attendu 0.91 = seulement <strong>0.09</strong>). Elle gagne à peine 7 pts.</p>
+    <p style="margin-top:6px;"><strong>Mais si B avait gagné</strong> (résultat =1 pour B, attendu = 0.09) : $\Delta r_B = 64 \times (1 - 0.09) \times 1.17 \approx +\mathbf{68}\text{ pts !}$</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 4 — MODE SOIRÉE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">4. Mode Soirée — 2 sous-matchs avec rééquilibrage</div>
+
+  <div class="intuition-box">
+    <div class="title">🏟️ L'idée du mode soirée</div>
+    <p>Parfois on joue deux matchs dans la même soirée avec des équipes différentes. Le système traite ça comme <strong>un seul match avec deux mi-temps</strong> :</p>
+    <ul>
+      <li>Chaque sous-match a un <strong>poids</strong> défini par l'admin (ex: 2/3 et 1/3)</li>
+      <li>Le calcul est <strong>séquentiel</strong> : les ratings changent après le SM1, et c'est ces nouveaux ratings qui sont utilisés pour le SM2</li>
+      <li>Au final, on cumule les deltas des deux sous-matchs pour obtenir le delta total</li>
+      <li>Les stats (V/N/D) n'augmentent que de <strong>1</strong> dans le classement, quel que soit le nombre de sous-matchs</li>
+    </ul>
+  </div>
+
+  <div class="sub-title">Le poids (split) <span class="tag-math">Mathématiques</span></div>
+  <p>L'admin choisit un split. Ce soir : <strong>[0.667, 0.333]</strong> = le premier match compte double.</p>
+  <div class="formula-box">
+    $$K_{\text{pondéré}} = K \times \text{poids}$$
+    $$\text{SM1 : } K_1 = 64 \times 0.667 = 42.7 \qquad \text{SM2 : } K_2 = 64 \times 0.333 = 21.3$$
+  </div>
+
+  <div class="sub-title">Le résultat synthétique V/N/D <span class="tag-math">Mathématiques</span></div>
+  <div class="formula-box">
+    $$\text{score} = S_{SM1} \times p_1 + S_{SM2} \times p_2 \quad \text{avec } S=1\text{ (victoire)}, 0.5\text{ (nul)}, 0\text{ (défaite)}$$
+    $$\text{score} > 0.6 \Rightarrow \textbf{VICTOIRE} \qquad \text{score} < 0.4 \Rightarrow \textbf{DÉFAITE} \qquad \text{sinon} \Rightarrow \textbf{NUL}$$
+  </div>
+
+  <div class="intuition-box">
+    <div class="title">💡 Pourquoi ces seuils 0.4 / 0.6 ?</div>
+    <p>Avec un split <strong>50/50</strong> : gagner SM1 + perdre SM2 = score = $1 \times 0.5 + 0 \times 0.5 = 0.5$ → dans la zone NUL (entre 0.4 et 0.6). Le système considère que c'est une soirée mitigée.</p>
+    <p style="margin-top:6px;">Avec un split <strong>2/3 + 1/3</strong> : gagner SM1 + perdre SM2 = $1 \times 0.667 + 0 \times 0.333 = 0.667 > 0.6$ → <strong>VICTOIRE</strong>. Le SM1 qui compte plus "écrase" la défaite au SM2.</p>
+  </div>
+
+  <div class="sub-title">Tableau des cas possibles selon le split</div>
+  <table>
+    <thead><tr><th>SM1</th><th>SM2</th><th>Split 50/50</th><th>Split 2/3 · 1/3</th><th>Split 1/3 · 2/3</th></tr></thead>
+    <tbody>
+      <tr><td class="vic">Victoire</td><td class="vic">Victoire</td><td class="vic">VICTOIRE (1.0)</td><td class="vic">VICTOIRE (1.0)</td><td class="vic">VICTOIRE (1.0)</td></tr>
+      <tr><td class="vic">Victoire</td><td class="def">Défaite</td><td class="center">NUL (0.5)</td><td class="vic">VICTOIRE (0.667)</td><td class="def">DÉFAITE (0.333)</td></tr>
+      <tr><td class="def">Défaite</td><td class="vic">Victoire</td><td class="center">NUL (0.5)</td><td class="def">DÉFAITE (0.333)</td><td class="vic">VICTOIRE (0.667)</td></tr>
+      <tr><td class="def">Défaite</td><td class="def">Défaite</td><td class="def">DÉFAITE (0.0)</td><td class="def">DÉFAITE (0.0)</td><td class="def">DÉFAITE (0.0)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box-orange">
+    <div class="box-title">⚠️ Attention avec le split 2/3 · 1/3</div>
+    <p>Gagner le SM1 (le plus lourd) et perdre le SM2 → <strong>VICTOIRE</strong> dans les stats. Perdre le SM1 et gagner le SM2 → <strong>DÉFAITE</strong>. Le premier match compte beaucoup plus que le second.</p>
+  </div>
+
+  <div class="sub-title">Schéma de traitement</div>
+  <div class="flow">
+    <div class="flow-box blue"><strong>① Admin saisit</strong><div class="sub">Équipes + scores SM1 et SM2</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box orange"><strong>② Calcul ELO SM1</strong><div class="sub">K × poids1 — ratings mis à jour</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box orange"><strong>③ Calcul ELO SM2</strong><div class="sub">K × poids2 — utilise ratings post-SM1</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box green"><strong>④ Résultat final</strong><div class="sub">Cumul des deltas + V/N/D synthétique</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 5 — SM1 ROSLAN FC
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">5. Notre soirée — Sous-match 1 (poids 0.667, score 6-2)</div>
+
+  <div class="teams-wrap">
+    <div class="team-col">
+      <div class="team-header a">Équipe A</div>
+      <div class="team-row"><span>Ruben Timsit</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Benjamin S</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Sambo</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Ilan Teboul</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Adamax</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Benjamin Amsellem</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Elie Memmi</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Jeremy Levy</span><span class="rating">1 000</span></div>
+    </div>
+    <div>
+      <div class="score-header">Score</div>
+      <div class="score-cell" style="height:calc(100% - 36px);flex-direction:column;">
+        <span class="score-big win">6</span>
+        <span class="score-sep">—</span>
+        <span class="score-big lose">2</span>
+      </div>
+    </div>
+    <div class="team-col">
+      <div class="team-header b">Équipe B</div>
+      <div class="team-row"><span>Liam</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Noe Sroussi</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Ruben Sayada</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Koubz</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Ariel</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Isaac Leyne</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Avner</span><span class="rating">1 000</span></div>
+      <div class="team-row"><span>Jeremie</span><span class="rating">1 000</span></div>
+    </div>
+  </div>
+
+  <div class="sub-title">Calcul ELO — SM1 <span class="tag-math">Mathématiques</span></div>
+
+  <div class="formula-box">
+    <p><strong>1. Probabilité attendue</strong></p>
+    $$E_A = \frac{1}{1 + 10^{(1000 - 1000)\,/\,400}} = \frac{1}{2} = 0.500$$
+    <p style="font-size:9pt;margin:6px 0;">Ratings égaux → 50/50.</p>
+    <p><strong>2. Multiplicateur</strong></p>
+    $$M = 1 + \frac{|6 - 2|}{6} = 1 + \frac{4}{6} = 1.667$$
+    <p><strong>3. K pondéré</strong></p>
+    $$K_1 = 64 \times 0.667 = 42.7$$
+    <p><strong>4. Deltas</strong></p>
+    $$\Delta r_A = \text{round}(42.7 \times (1 - 0.500) \times 1.667) = \text{round}(35.6) = \mathbf{+36}$$
+    $$\Delta r_B = \text{round}(42.7 \times (0 - 0.500) \times 1.667) = \text{round}(-35.6) = \mathbf{-36}$$
+  </div>
+
+  <div class="box-green">
+    <div class="box-title">✓ Après SM1</div>
+    <p>Joueurs Équipe A : $1000 + 36 = \mathbf{1036}$ &nbsp;|&nbsp; Joueurs Équipe B : $1000 - 36 = \mathbf{964}$</p>
+    <p style="margin-top:4px;">Ces nouveaux ratings serviront de base pour le SM2 (calcul séquentiel).</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 6 — SM2 ROSLAN FC
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">6. Notre soirée — Sous-match 2 (poids 0.333, score 2-3)</div>
+  <p>Les équipes sont rééquilibrées. On utilise les ratings <strong>post-SM1</strong> :</p>
+
+  <div class="teams-wrap">
+    <div class="team-col">
+      <div class="team-header a">Équipe A (post-SM1)</div>
+      <div class="team-row"><span>Benjamin S</span><span class="rating up">1 036</span></div>
+      <div class="team-row"><span>Sambo</span><span class="rating up">1 036</span></div>
+      <div class="team-row"><span>Ilan Teboul</span><span class="rating up">1 036</span></div>
+      <div class="team-row"><span>Adamax</span><span class="rating up">1 036</span></div>
+      <div class="team-row"><span>Benjamin Amsellem</span><span class="rating up">1 036</span></div>
+      <div class="team-row"><span>Elie Memmi</span><span class="rating up">1 036</span></div>
+      <div class="team-row"><span>Isaac Leyne</span><span class="rating down">964</span></div>
+      <div class="team-row"><span>Jeremy Levy</span><span class="rating up">1 036</span></div>
+    </div>
+    <div>
+      <div class="score-header">Score</div>
+      <div class="score-cell" style="height:calc(100% - 36px);flex-direction:column;">
+        <span class="score-big lose">2</span>
+        <span class="score-sep">—</span>
+        <span class="score-big win">3</span>
+      </div>
+    </div>
+    <div class="team-col">
+      <div class="team-header b">Équipe B (post-SM1)</div>
+      <div class="team-row"><span>Ruben Timsit</span><span class="rating up">1 036</span></div>
+      <div class="team-row"><span>Liam</span><span class="rating down">964</span></div>
+      <div class="team-row"><span>Noe Sroussi</span><span class="rating down">964</span></div>
+      <div class="team-row"><span>Ruben Sayada</span><span class="rating down">964</span></div>
+      <div class="team-row"><span>Koubz</span><span class="rating down">964</span></div>
+      <div class="team-row"><span>Ariel</span><span class="rating down">964</span></div>
+      <div class="team-row"><span>Avner</span><span class="rating down">964</span></div>
+      <div class="team-row"><span>Jeremie</span><span class="rating down">964</span></div>
+    </div>
+  </div>
+
+  <div class="sub-title">Calcul ELO — SM2 <span class="tag-math">Mathématiques</span></div>
+
+  <div class="formula-box">
+    <p><strong>1. Ratings moyens</strong></p>
+    $$\bar{R}_A = \frac{1036 \times 7 + 964}{8} = \frac{8216}{8} = 1027 \qquad \bar{R}_B = \frac{1036 + 964 \times 7}{8} = \frac{7784}{8} = 973$$
+    <p><strong>2. Probabilités — chaque équipe a SA propre probabilité</strong></p>
+    $$E_A = \frac{1}{1 + 10^{(973 - 1027)\,/\,400}} = \frac{1}{1 + 10^{-0.135}} = 0.577 \quad \text{(A est favorite)}$$
+    $$E_B = 1 - E_A = 1 - 0.577 = 0.423$$
+    <p><strong>3. Multiplicateur</strong></p>
+    $$M = 1 + \frac{|2 - 3|}{6} = 1.167$$
+    <p><strong>4. K pondéré</strong></p>
+    $$K_2 = 64 \times 0.333 = 21.3$$
+    <p><strong>5. Deltas (symétrie garantie)</strong></p>
+    $$\Delta r_A \text{ (défaite)} = \text{round}(21.3 \times (0 - 0.577) \times 1.167) = \text{round}(-14.35) = \mathbf{-14}$$
+    $$\Delta r_B \text{ (victoire)} = \text{round}(21.3 \times (1 - 0.423) \times 1.167) = \text{round}(+14.35) = \mathbf{+14}$$
+  </div>
+
+  <div class="intuition-box">
+    <div class="title">💡 Pourquoi +14 et pas +11 ? La symétrie ELO</div>
+    <p>On utilise bien <strong>$E_B = 0.423$</strong> (probabilité de victoire de B), pas $E_A$. Mathématiquement : $\Delta r_B = K \times (1 - E_B) \times M = K \times E_A \times M$, ce qui est exactement l'opposé de $\Delta r_A = K \times (0 - E_A) \times M$. Les deux deltas sont donc <strong>toujours opposés</strong>.</p>
+  </div>
+
+  <div class="box-green">
+    <div class="box-title">✓ Après SM2</div>
+    <p>Joueurs Éq. A SM2 : $1036 - 14 = \mathbf{1022}$ &nbsp;|&nbsp; Joueurs Éq. B SM2 : $964 + 14 = \mathbf{978}$</p>
+    <p style="margin-top:4px;">Exception : Ruben Timsit était dans Éq. B → $1036 + 14 = \mathbf{1050}$ &nbsp;|&nbsp; Isaac Leyne était dans Éq. A → $964 - 14 = \mathbf{950}$</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 7 — RÉSULTATS FINAUX
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">7. Résultats finaux — Cumul et classement</div>
+
+  <div class="formula-box">
+    $$\Delta r_{\text{total}} = \Delta r_{\text{SM1}} + \Delta r_{\text{SM2}}$$
+    $$\text{score}_{V/N/D} = S_{\text{SM1}} \times 0.667 + S_{\text{SM2}} \times 0.333 \quad \Rightarrow \quad \begin{cases} > 0.6 \Rightarrow \text{Victoire} \\ < 0.4 \Rightarrow \text{Défaite} \\ \text{sinon} \Rightarrow \text{Nul} \end{cases}$$
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Joueur</th><th>Avant</th><th>Δ SM1</th><th>Δ SM2</th><th>Δ Total</th><th>Après</th><th>Score V/N/D</th><th>Résultat</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Ruben Timsit</td><td class="num">1 000</td><td class="pos num">+36</td><td class="pos num">+14</td><td class="pos num">+50</td><td class="num">1 050</td><td class="center">1.0</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Benjamin S</td><td class="num">1 000</td><td class="pos num">+36</td><td class="neg num">-14</td><td class="pos num">+22</td><td class="num">1 022</td><td class="center">0.667</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Sambo</td><td class="num">1 000</td><td class="pos num">+36</td><td class="neg num">-14</td><td class="pos num">+22</td><td class="num">1 022</td><td class="center">0.667</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Ilan Teboul</td><td class="num">1 000</td><td class="pos num">+36</td><td class="neg num">-14</td><td class="pos num">+22</td><td class="num">1 022</td><td class="center">0.667</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Adamax</td><td class="num">1 000</td><td class="pos num">+36</td><td class="neg num">-14</td><td class="pos num">+22</td><td class="num">1 022</td><td class="center">0.667</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Benjamin Amsellem</td><td class="num">1 000</td><td class="pos num">+36</td><td class="neg num">-14</td><td class="pos num">+22</td><td class="num">1 022</td><td class="center">0.667</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Elie Memmi</td><td class="num">1 000</td><td class="pos num">+36</td><td class="neg num">-14</td><td class="pos num">+22</td><td class="num">1 022</td><td class="center">0.667</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Jeremy Levy</td><td class="num">1 000</td><td class="pos num">+36</td><td class="neg num">-14</td><td class="pos num">+22</td><td class="num">1 022</td><td class="center">0.667</td><td class="vic">VICTOIRE</td></tr>
+      <tr><td>Liam</td><td class="num">1 000</td><td class="neg num">-36</td><td class="pos num">+14</td><td class="neg num">-22</td><td class="num">978</td><td class="center">0.333</td><td class="def">DÉFAITE</td></tr>
+      <tr><td>Noe Sroussi</td><td class="num">1 000</td><td class="neg num">-36</td><td class="pos num">+14</td><td class="neg num">-22</td><td class="num">978</td><td class="center">0.333</td><td class="def">DÉFAITE</td></tr>
+      <tr><td>Ruben Sayada</td><td class="num">1 000</td><td class="neg num">-36</td><td class="pos num">+14</td><td class="neg num">-22</td><td class="num">978</td><td class="center">0.333</td><td class="def">DÉFAITE</td></tr>
+      <tr><td>Koubz</td><td class="num">1 000</td><td class="neg num">-36</td><td class="pos num">+14</td><td class="neg num">-22</td><td class="num">978</td><td class="center">0.333</td><td class="def">DÉFAITE</td></tr>
+      <tr><td>Ariel</td><td class="num">1 000</td><td class="neg num">-36</td><td class="pos num">+14</td><td class="neg num">-22</td><td class="num">978</td><td class="center">0.333</td><td class="def">DÉFAITE</td></tr>
+      <tr><td><strong>Isaac Leyne</strong></td><td class="num">1 000</td><td class="neg num">-36</td><td class="neg num">-14</td><td class="neg num">-50</td><td class="num">950</td><td class="center">0.0</td><td class="def">DÉFAITE</td></tr>
+      <tr><td>Avner</td><td class="num">1 000</td><td class="neg num">-36</td><td class="pos num">+14</td><td class="neg num">-22</td><td class="num">978</td><td class="center">0.333</td><td class="def">DÉFAITE</td></tr>
+      <tr><td>Jeremie</td><td class="num">1 000</td><td class="neg num">-36</td><td class="pos num">+14</td><td class="neg num">-22</td><td class="num">978</td><td class="center">0.333</td><td class="def">DÉFAITE</td></tr>
+    </tbody>
+  </table>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;">
+    <div class="box-green">
+      <div class="box-title">★ Ruben Timsit +50</div>
+      <p>SM1 victoire (+36) + SM2 victoire (+14)</p>
+      <p>Score : $1 \times 0.667 + 1 \times 0.333 = 1.0$</p>
+    </div>
+    <div class="box-red">
+      <div class="box-title">⚠ Isaac Leyne -50</div>
+      <p>SM1 défaite (−36) + SM2 défaite (−14)</p>
+      <p>Score : $0 \times 0.667 + 0 \times 0.333 = 0.0$</p>
+    </div>
+    <div class="box-orange">
+      <div class="box-title">Benjamin S +22</div>
+      <p>SM1 victoire (+36) + SM2 défaite (−14)</p>
+      <p>Score : $1 \times 0.667 + 0 \times 0.333 = 0.667 > 0.6$ → Victoire !</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 8 — SYSTÈME MOM
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">8. Le système Man of the Match (MOM)</div>
+
+  <div class="intuition-box">
+    <div class="title">🏆 L'idée en deux phrases</div>
+    <p>Après chaque match, tous les joueurs présents votent pour les 3 meilleurs de la soirée. Les gagnants reçoivent un <strong>bonus ELO en plus</strong> de ce qu'ils ont déjà gagné (ou perdu) pendant le match. C'est une récompense communautaire : c'est tes coéquipiers et adversaires qui décident.</p>
+  </div>
+
+  <div class="sub-title">Comment fonctionne le vote</div>
+  <p>Chaque joueur présent soumet un <strong>podium personnel</strong> : Top 1, Top 2, Top 3. Les votes sont agrégés avec un système de points :</p>
+
+  <table>
+    <thead><tr><th>Position votée</th><th>Points attribués</th><th>Intuition</th></tr></thead>
+    <tbody>
+      <tr><td>🥇 Top 1</td><td class="center"><strong>3 pts</strong></td><td>Le meilleur joueur de la soirée selon toi</td></tr>
+      <tr><td>🥈 Top 2</td><td class="center"><strong>2 pts</strong></td><td>Très bonne performance</td></tr>
+      <tr><td>🥉 Top 3</td><td class="center"><strong>1 pt</strong></td><td>Mérite d'être reconnu</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Départage en cas d'ex-aequo</div>
+  <p>Si deux joueurs ont le même total de points, on départage dans l'ordre :</p>
+  <ol style="padding-left:20px;margin-bottom:8px;">
+    <li>Total de points le plus élevé</li>
+    <li>Nombre de votes Top 1 reçus</li>
+    <li>Nombre de votes Top 2 reçus</li>
+    <li>Si toujours égalité → ex-aequo accepté (les deux reçoivent le même rang)</li>
+  </ol>
+
+  <div class="sub-title">Fermeture du vote</div>
+  <div class="box-blue">
+    <div class="box-title">Deux conditions de fermeture (la première qui arrive gagne)</div>
+    <ul>
+      <li><strong>Tous les joueurs ont voté</strong> → fermeture immédiate et automatique</li>
+      <li><strong>24 heures se sont écoulées</strong> depuis la validation du match → fermeture automatique même si tout le monde n'a pas voté</li>
+    </ul>
+    <p style="margin-top:6px;">Un compteur <code>votesParticipes</code> est incrémenté dans le profil de chaque joueur qui participe au vote (indépendamment du résultat).</p>
+  </div>
+
+  <div class="sub-title">Le bonus ELO MOM <span class="tag-math">Mathématiques</span></div>
+  <p>Une fois le vote fermé, les top 1/2/3 reçoivent un bonus ELO calculé comme suit :</p>
+
+  <div class="formula-box">
+    $$\text{Bonus}_{\text{MOM}} = \text{round}\!\left(|\Delta r_{\text{match}}| \times \text{pct}\right)$$
+    <p style="font-size:9pt;margin-top:8px;">Avec les pourcentages :</p>
+    $$\text{pct} = \begin{cases} 25\% & \text{si rang 1 (MOM)} \\ 15\% & \text{si rang 2} \\ 8\% & \text{si rang 3} \end{cases}$$
+    <p style="font-size:9pt;margin-top:6px;">$|\Delta r_{\text{match}}|$ = valeur absolue du delta ELO du match de ce joueur (toujours positif).</p>
+  </div>
+
+  <div class="intuition-box">
+    <div class="title">💡 Pourquoi la valeur absolue ?</div>
+    <p>Le bonus est <strong>toujours positif</strong>, même si le joueur a perdu son match. Si tu as été élu MOM alors que ton équipe a perdu, tu mérites quand même une récompense. La valeur absolue garantit que le bonus ne punit pas davantage un joueur déjà en défaite.</p>
+    <p style="margin-top:6px;"><strong>Exemple :</strong> Isaac Leyne perd -50 pts de match. S'il est élu MOM (rang 1), son bonus = $\text{round}(50 \times 0.25) = +13\text{ pts}$. Son delta final devient $-50 + 13 = -37$ pts.</p>
+  </div>
+
+  <div class="sub-title">Exemples de bonus MOM — Cette soirée</div>
+  <table>
+    <thead><tr><th>Joueur</th><th>Δ match</th><th>|Δ match|</th><th>Si élu MOM (25%)</th><th>Si rang 2 (15%)</th><th>Si rang 3 (8%)</th></tr></thead>
+    <tbody>
+      <tr><td>Ruben Timsit</td><td class="pos num">+50</td><td class="num">50</td><td class="pos num">+13</td><td class="pos num">+8</td><td class="pos num">+4</td></tr>
+      <tr><td>Benjamin S / Sambo / …</td><td class="pos num">+22</td><td class="num">22</td><td class="pos num">+6</td><td class="pos num">+3</td><td class="pos num">+2</td></tr>
+      <tr><td>Liam / Koubz / …</td><td class="neg num">-22</td><td class="num">22</td><td class="pos num">+6</td><td class="pos num">+3</td><td class="pos num">+2</td></tr>
+      <tr><td>Isaac Leyne</td><td class="neg num">-50</td><td class="num">50</td><td class="pos num">+13</td><td class="pos num">+8</td><td class="pos num">+4</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Les trophées</div>
+  <p>En parallèle du bonus ELO, chaque podium incrémente un compteur de trophées dans le profil du joueur :</p>
+  <table>
+    <thead><tr><th>Rang</th><th>Trophée</th><th>Visible dans le profil</th></tr></thead>
+    <tbody>
+      <tr><td>🥇 Rang 1</td><td>Trophée Or</td><td>Oui — compteur <code>trophees.or</code></td></tr>
+      <tr><td>🥈 Rang 2</td><td>Trophée Argent</td><td>Oui — compteur <code>trophees.argent</code></td></tr>
+      <tr><td>🥉 Rang 3</td><td>Trophée Bronze</td><td>Oui — compteur <code>trophees.bronze</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Schéma complet — Timeline d'un match</div>
+  <div class="flow" style="flex-wrap:wrap;gap:6px;">
+    <div class="flow-box blue" style="min-width:100px;"><strong>Match joué</strong><div class="sub">Admin valide le score</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box orange" style="min-width:100px;"><strong>ELO mis à jour</strong><div class="sub">Delta appliqué immédiatement</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box blue" style="min-width:100px;"><strong>Vote MOM ouvert</strong><div class="sub">Notif push envoyée</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box orange" style="min-width:100px;"><strong>Votes collectés</strong><div class="sub">Tous votent ou 24h passent</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box green" style="min-width:100px;"><strong>Bonus ELO + Trophées</strong><div class="sub">Top 1/2/3 récompensés</div></div>
+  </div>
+
+  <div class="box-orange" style="margin-top:14px;">
+    <div class="box-title">⚠️ Points importants à retenir</div>
+    <ul>
+      <li>Le bonus MOM est <strong>toujours additif</strong> (jamais punitif), même pour les perdants.</li>
+      <li>Si personne ne reçoit de votes (0 participants au vote), aucun bonus n'est appliqué.</li>
+      <li>Le bonus est calculé sur le <strong>delta du match</strong>, pas sur le rating total — il est donc proportionnel à l'enjeu de la partie.</li>
+      <li>Un joueur peut être élu MOM même s'il a perdu son match.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 9 — PARAMÈTRES & RÉFÉRENCE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">9. Tableau de référence — Paramètres du système</div>
+
+  <table>
+    <thead><tr><th>Paramètre</th><th>Valeur</th><th>Explication intuitive</th></tr></thead>
+    <tbody>
+      <tr><td>$K$-Factor</td><td class="center"><strong>64</strong></td><td>Vitesse d'évolution. Plus K est grand, plus le classement "bouge" vite après chaque match.</td></tr>
+      <tr><td>Rating de base</td><td class="center"><strong>1 000</strong></td><td>Tout nouveau joueur démarre ici. La moyenne du groupe reste autour de 1 000.</td></tr>
+      <tr><td>Gain maximum</td><td class="center"><strong>+150 pts</strong></td><td>Plafond de sécurité par match. Évite les gains abusifs en cas de bug ou d'écart énorme.</td></tr>
+      <tr><td>Perte maximum</td><td class="center"><strong>−150 pts</strong></td><td>Plancher de sécurité. Protège contre une chute catastrophique en un match.</td></tr>
+      <tr><td>1 soirée = 1 match</td><td class="center"><strong>✓</strong></td><td>Même avec 2 sous-matchs, le compteur "matchs joués" n'augmente que de 1.</td></tr>
+      <tr><td>Split par défaut</td><td class="center"><strong>[0.5, 0.5]</strong></td><td>Chaque sous-match pèse 50%. Un 1V+1D donne NUL dans les stats.</td></tr>
+      <tr><td>Seuil victoire V/N/D</td><td class="center"><strong>> 0.6</strong></td><td>Score pondéré au-dessus de 0.6 → comptabilisé comme Victoire.</td></tr>
+      <tr><td>Seuil nul V/N/D</td><td class="center"><strong>0.4 – 0.6</strong></td><td>Zone neutre → Nul. Arrive quand les deux sous-matchs s'équilibrent.</td></tr>
+      <tr><td>Seuil défaite V/N/D</td><td class="center"><strong>< 0.4</strong></td><td>Score pondéré en dessous de 0.4 → comptabilisé comme Défaite.</td></tr>
+      <tr><td>Calcul séquentiel</td><td class="center"><strong>SM1 → SM2</strong></td><td>Les deltas du SM1 modifient les ratings avant le calcul du SM2.</td></tr>
+      <tr><td colspan="3" style="background:#1e3a8a;color:white;font-weight:700;padding:7px 10px;">Système MOM (Man of the Match)</td></tr>
+      <tr><td>Bonus MOM rang 1</td><td class="center"><strong>+25%</strong></td><td>25% de la valeur absolue du delta match du joueur élu MOM.</td></tr>
+      <tr><td>Bonus MOM rang 2</td><td class="center"><strong>+15%</strong></td><td>15% de la valeur absolue du delta match du joueur classé 2ème.</td></tr>
+      <tr><td>Bonus MOM rang 3</td><td class="center"><strong>+8%</strong></td><td>8% de la valeur absolue du delta match du joueur classé 3ème.</td></tr>
+      <tr><td>Base du calcul</td><td class="center"><strong>|Δ match|</strong></td><td>Toujours positif. Un perdant peut recevoir un bonus s'il est élu.</td></tr>
+      <tr><td>Fermeture vote</td><td class="center"><strong>Tous votés ou 24h</strong></td><td>Automatique. La première condition atteinte déclenche la fermeture.</td></tr>
+      <tr><td>Système de points</td><td class="center"><strong>3 / 2 / 1</strong></td><td>Top 1 = 3 pts, Top 2 = 2 pts, Top 3 = 1 pt. Départage : top1 → top2 → ex-aequo.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title mt">Formules de référence complètes <span class="tag-math">Mathématiques</span></div>
+  <div class="formula-box">
+    <p><strong>Probabilité de victoire de l'équipe A</strong></p>
+    $$E_A = \frac{1}{1 + 10^{(\bar{R}_B - \bar{R}_A)\,/\,400}} \qquad E_B = 1 - E_A$$
+    <p><strong>Delta ELO</strong></p>
+    $$\Delta r_X = \text{round}\!\left(K \cdot p_X \cdot (S_X - E_X) \cdot \left(1 + \frac{|s_A - s_B|}{6}\right)\right)$$
+    <p style="font-size:8.5pt;margin-top:4px;">avec $p_X$ le poids du sous-match (1 pour un match simple).</p>
+    <p><strong>Score synthétique V/N/D (mode soirée)</strong></p>
+    $$\text{score} = \sum_{i} S_{X,i} \cdot p_i \quad \Rightarrow \quad \begin{cases} > 0.6 & \text{Victoire} \\ [0.4, 0.6] & \text{Nul} \\ < 0.4 & \text{Défaite} \end{cases}$$
+    <p style="margin-top:10px;"><strong>Bonus MOM (appliqué après fermeture du vote, 24h max)</strong></p>
+    $$\text{Bonus}_{\text{MOM}} = \text{round}\!\left(|\Delta r_{\text{match}}| \times \text{pct}\right) \qquad \text{pct} \in \{0.25,\;0.15,\;0.08\}$$
+    $$r_{\text{final}} = r_{\text{après match}} + \text{Bonus}_{\text{MOM}} \quad \text{(toujours positif, même en cas de défaite)}$$
+  </div>
+
+  <div class="box-blue">
+    <div class="box-title">Vérification automatique</div>
+    <p>Le script <code>audit-roslan-soiree.js</code> recalcule chaque delta depuis Firestore et compare avec les valeurs enregistrées. Ce soir : <strong>16/16 joueurs corrects — aucun écart détecté.</strong></p>
+  </div>
+
+  <p style="color:var(--gray);font-size:8.5pt;text-align:center;margin-top:24px;">
+    Impact Rating App &nbsp;·&nbsp; ROSLAN FC &nbsp;·&nbsp; Mémo Système ELO &nbsp;·&nbsp; 04/06/2026
+  </p>
+</div>
+
+</body>
+</html>

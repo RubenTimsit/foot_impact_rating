@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mon Petit Match</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A0A12">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mon Petit Match">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/app.css">
+
+  <!-- Safe-area fix iOS PWA : env(safe-area-inset-bottom) n'est pas initialisé
+       correctement sur le premier rendu. On lit la valeur via un probe DOM et on
+       la stocke dans --safe-bottom, mise à jour à chaque rotation/resize. -->
+  <script>
+    (function () {
+      var probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;left:0;bottom:0;height:0;' +
+        'padding-bottom:env(safe-area-inset-bottom,0px);' +
+        'visibility:hidden;pointer-events:none;';
+
+      function update() {
+        document.documentElement.appendChild(probe);
+        var h = probe.getBoundingClientRect().height;
+        document.documentElement.removeChild(probe);
+        document.documentElement.style.setProperty('--safe-bottom', h + 'px');
+      }
+
+      update();
+      window.addEventListener('resize', update);
+      window.addEventListener('orientationchange', function () {
+        // iOS reporte la mise à jour du layout après orientationchange
+        setTimeout(update, 100);
+        setTimeout(update, 400);
+      });
+    })();
+  </script>
+
+  <!-- Font Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ── Loader initial ──────────────────────────────────────── -->
+  <div id="app-loader">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ── Header fixe ────────────────────────────────────────── -->
+  <header id="app-header" class="hidden">
+    <div class="header-inner">
+
+      <!-- Sélecteur de groupe -->
+      <button id="group-selector" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span id="current-group-name">Mon groupe</span>
+        <span class="selector-arrow">▼</span>
+      </button>
+
+      <!-- Actions droite -->
+      <div style="display:flex;gap:0.4rem;align-items:center;">
+        <button class="btn-icon" id="btn-notif" title="Notifications" style="display:none;">
+          🔔
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Zone principale (scrollable) ──────────────────────── -->
+  <main id="app-main" class="hidden">
+    <div id="view-container"></div>
+  </main>
+
+  <!-- ── Bottom Navigation ─────────────────────────────────── -->
+  <nav id="bottom-nav" class="hidden" role="navigation" aria-label="Navigation principale">
+
+    <a href="#/" class="nav-item" data-route="/" aria-label="Accueil">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Accueil</span>
+    </a>
+
+    <a href="#/classement" class="nav-item" data-route="/classement" aria-label="Classement">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">Classement</span>
+    </a>
+
+    <a href="#/match" class="nav-item" data-route="/match" aria-label="Match">
+      <span class="nav-icon">⚽</span>
+      <span class="nav-label">Match</span>
+    </a>
+
+    <a href="#/synergies" class="nav-item" data-route="/synergies" aria-label="Historique">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Historique</span>
+    </a>
+
+    <a href="#/profil" class="nav-item" data-route="/profil" aria-label="Profil">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Profil</span>
+    </a>
+
+    <a href="#/admin" id="nav-admin" class="nav-item hidden" data-route="/admin" aria-label="Admin">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Admin</span>
+      <span class="nav-badge hidden" id="admin-badge">0</span>
+    </a>
+
+  </nav>
+
+  <!-- ── Modal : sélecteur de groupe ────────────────────────── -->
+  <div id="modal-group-picker" class="modal-overlay hidden">
+    <div class="modal-sheet" style="max-width:480px;margin:0 auto;">
+      <div class="sheet-handle"></div>
+      <p class="modal-title" style="padding:0 0 0.75rem;">Choisir un groupe</p>
+      <div id="group-picker-list" style="display:flex;flex-direction:column;gap:0.4rem;padding-bottom:0.5rem;"></div>
+    </div>
+  </div>
+
+  <!-- ── Scripts ───────────────────────────────────────────── -->
+  <script type="module" src="js/router.js"></script>
+  <script src="/js/pwa.js"></script>
+
+
+</body>
+</html>

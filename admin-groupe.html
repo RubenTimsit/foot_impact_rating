@@ -2,8 +2,17 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Groupe — Impact Rating</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Admin Groupe — Mon Petit Match</title>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0A0A12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mon Petit Match">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
     <link rel="stylesheet" href="css/groupe.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +22,7 @@
 
     <nav class="app-nav">
         <div class="nav-inner">
-            <a href="profil.html" class="nav-logo">⚽ Impact Rating</a>
+            <a href="profil.html" class="nav-logo">⚽ Mon Petit Match</a>
             <div class="nav-right">
                 <span id="nav-groupe-nom" class="nav-groupe-nom"></span>
                 <a href="profil.html" class="btn-nav-ghost">← Mon profil</a>
@@ -69,7 +78,7 @@
                             <th>#</th>
                             <th>Joueur</th>
                             <th>Position</th>
-                            <th>Impact Rating</th>
+                            <th>Rating</th>
                             <th>Matchs</th>
                             <th>V-N-D</th>
                             <th>Actions</th>
@@ -115,6 +124,7 @@
                             <label class="form-label">Nombre max de joueurs</label>
                             <input type="number" id="creneau-max" class="form-input" min="4" max="30" value="10">
                         </div>
+                        <div id="creneau-div-inject"></div>
                         <div id="creneau-msg" class="form-msg hidden"></div>
                         <button id="btn-creer-creneau" class="btn-action btn-primary">🟢 Ouvrir les inscriptions</button>
                     </div>
@@ -272,6 +282,7 @@
                             <label class="form-label">Max joueurs par match</label>
                             <input type="number" id="new-max-joueurs" class="form-input" min="4" max="30" value="10">
                         </div>
+                        <div id="hebdo-div-inject"></div>
                         <div id="add-hebdo-msg" class="form-msg hidden"></div>
                         <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
                             <button id="btn-save-new-hebdo" class="btn-action btn-primary">Ajouter ce créneau</button>
@@ -354,7 +365,50 @@
             document.getElementById('page-loader').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
 
+            injectDivCheckboxes();
             await loadMembres();
+        }
+
+        // ========== HELPERS DIVISIONS ==========
+        function divLabel(idx) {
+            const noms = groupe.nomsSousGroupes || [];
+            return (noms[idx - 1] && noms[idx - 1].trim()) ? noms[idx - 1] : `Division ${idx}`;
+        }
+        function divBadgeHtml(sousGroupe) {
+            if (sousGroupe == null) return '<span style="color:var(--text-muted)">—</span>';
+            return `<span class="div-badge-${sousGroupe}">${escapeHtml(divLabel(sousGroupe))}</span>`;
+        }
+        function divCiblesHtml(sousGroupesCibles) {
+            if (!sousGroupesCibles || !sousGroupesCibles.length) return '';
+            return sousGroupesCibles.map(d => `<span class="div-badge-${d}">${escapeHtml(divLabel(d))}</span>`).join(' ');
+        }
+        function getDivCheckboxes(name) {
+            const checked = [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(cb => Number(cb.value));
+            return checked.length ? checked : null;
+        }
+        function buildDivCheckboxesHtml(name, defaultChecked = true) {
+            const n = groupe.nombreSousGroupes || 1;
+            if (n <= 1) return '';
+            return `<div class="form-group">
+                <label class="form-label">Divisions ciblées</label>
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.25rem;">
+                    ${Array.from({ length: n }, (_, i) => `
+                        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                            <input type="checkbox" name="${name}" value="${i+1}" ${defaultChecked ? 'checked' : ''}>
+                            <span class="div-badge-${i+1}">${escapeHtml(divLabel(i+1))}</span>
+                        </label>`).join('')}
+                </div>
+            </div>`;
+        }
+        function injectDivCheckboxes() {
+            const n = groupe.nombreSousGroupes || 1;
+            if (n <= 1) return;
+            // Créneau manuel
+            const creneauInject = document.getElementById('creneau-div-inject');
+            if (creneauInject) creneauInject.innerHTML = buildDivCheckboxesHtml('creneau-div');
+            // Nouveau hebdo
+            const hebdoInject = document.getElementById('hebdo-div-inject');
+            if (hebdoInject) hebdoInject.innerHTML = buildDivCheckboxesHtml('hebdo-div');
         }
 
         // ========== CONFIG HEBDO MULTI ==========
@@ -377,6 +431,7 @@
                         weekday:'long', day:'numeric', month:'long',
                         hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem'
                     }) : null;
+                const ciblesHtml = divCiblesHtml(cfg.sousGroupesCibles);
                 return `
                 <div class="hebdo-card ${cfg.actif ? 'hebdo-card-active' : 'hebdo-card-inactive'}">
                     <div class="hebdo-card-info">
@@ -385,6 +440,7 @@
                             <span class="hebdo-chip hebdo-chip-open">🔓 ${JOURS[cfg.inscriptionJour] || '?'} ${cfg.inscriptionHeure}</span>
                             <span class="hebdo-chip hebdo-chip-max">👥 ${cfg.maxJoueurs || 10} joueurs</span>
                         </div>
+                        ${ciblesHtml ? `<div style="margin-top:4px;">${ciblesHtml}</div>` : ''}
                         ${cfg.actif && nextDate ? `<div class="hebdo-next-label">⏰ Prochaine ouverture : ${nextDate}</div>` : ''}
                         ${!cfg.actif ? `<div class="hebdo-inactive-note">⏸ Créneau désactivé</div>` : ''}
                     </div>
@@ -442,6 +498,7 @@
             const inscriptionJour = parseInt(document.getElementById('new-insc-jour').value);
             const inscriptionHeure = getTimeSelect('new-insc-heure');
             const maxJoueurs = parseInt(document.getElementById('new-max-joueurs').value) || groupe?.maxJoueursMatch || 10;
+            const sousGroupesCibles = getDivCheckboxes('hebdo-div');
             const msg = document.getElementById('add-hebdo-msg');
             const btn = document.getElementById('btn-save-new-hebdo');
 
@@ -453,6 +510,7 @@
                 matchJour, matchHeure,
                 inscriptionJour, inscriptionHeure,
                 maxJoueurs,
+                sousGroupesCibles: sousGroupesCibles || null,
                 nextOuvertureDate: nextOuvertureDate.toISOString()
             };
 
@@ -465,7 +523,7 @@
                 groupe.configHebdos = { ...configHebdos, [id]: newHebdo };
 
                 // Pré-créer le doc matchs_semaine avec statut 'programmé'
-                await createProgrammeDoc(newHebdo, nextOuvertureDate);
+                await createProgrammeDoc(newHebdo, nextOuvertureDate, sousGroupesCibles);
 
                 configHebdos[id] = newHebdo;
                 renderConfigHebdos(configHebdos);
@@ -479,7 +537,7 @@
             }
         }
 
-        async function createProgrammeDoc(cfg, ouvertureDate) {
+        async function createProgrammeDoc(cfg, ouvertureDate, sousGroupesCibles) {
             // Calculer la date du match (prochain `matchJour` après l'ouverture)
             const [h, m] = cfg.matchHeure.split(':').map(Number);
             const matchDate = new Date(ouvertureDate);
@@ -499,14 +557,19 @@
                 if (data.dateMatch === matchDate.toISOString()) await deleteDoc(d.ref);
             }
 
-            await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), {
+            const slotData = {
                 dateMatch: matchDate.toISOString(),
                 dateOuvertureInscription: ouvertureDate.toISOString(),
                 maxJoueurs: cfg.maxJoueurs || 10,
                 statut: 'programmé',
                 confirmedCount: 0,
                 createdAt: new Date().toISOString()
-            });
+            };
+            if (sousGroupesCibles && sousGroupesCibles.length) {
+                slotData.sousGroupesCibles = sousGroupesCibles;
+            }
+
+            await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), slotData);
         }
 
         async function loadMembres() {
@@ -576,18 +639,47 @@
         // ========== MEMBRES ACTIFS ==========
         function renderMembres(actifs) {
             const tbody = document.getElementById('membres-tbody');
+            const hasDivisions = (groupe.nombreSousGroupes || 1) > 1;
+            const n = groupe.nombreSousGroupes || 1;
+
+            // Mise à jour du header de la table si divisions actives
+            const thead = document.querySelector('#membres-table thead tr');
+            if (thead) {
+                const existingDivTh = thead.querySelector('.th-division');
+                if (hasDivisions && !existingDivTh) {
+                    const divTh = document.createElement('th');
+                    divTh.className = 'th-division';
+                    divTh.textContent = 'Division';
+                    thead.insertBefore(divTh, thead.querySelector('th:nth-child(3)'));
+                }
+            }
+
             if (!actifs.length) {
-                tbody.innerHTML = `<tr><td colspan="7" class="empty-td">Aucun membre actif.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${hasDivisions ? 8 : 7}" class="empty-td">Aucun membre actif.</td></tr>`;
                 return;
             }
 
-            const sorted = [...actifs].sort((a, b) => (b.impactRating || 1000) - (a.impactRating || 1000));
+            const sorted = [...actifs].sort((a, b) => (b.rating || 1000) - (a.rating || 1000));
+
+            const divCellHtml = (m) => {
+                if (!hasDivisions) return '';
+                const opts = `<option value="">—</option>` +
+                    Array.from({ length: n }, (_, i) =>
+                        `<option value="${i+1}" ${m.sousGroupe === i+1 ? 'selected' : ''}>${escapeHtml(divLabel(i+1))}</option>`
+                    ).join('');
+                return `<td>
+                    ${m.sousGroupe ? `<span class="div-badge-${m.sousGroupe}" style="margin-bottom:4px;display:inline-block;">${escapeHtml(divLabel(m.sousGroupe))}</span><br>` : ''}
+                    <select class="btn-sm div-assign-sel" data-uid="${escapeHtml(m.id)}" style="padding:0.2rem 0.4rem;font-size:0.78rem;background:var(--dark-3);color:var(--light);border:1px solid var(--border);border-radius:6px;">${opts}</select>
+                </td>`;
+            };
+
             tbody.innerHTML = sorted.map((m, i) => `
                 <tr>
                     <td class="rank">${i + 1}</td>
                     <td><strong>${escapeHtml(m.displayName) || '—'}</strong></td>
+                    ${divCellHtml(m)}
                     <td><span class="pos-badge ${escapeHtml((m.position || '').toLowerCase())}">${escapeHtml(m.position) || '—'}</span></td>
-                    <td class="rating">${m.impactRating || 1000}</td>
+                    <td class="rating">${m.rating || 1000}</td>
                     <td>${m.matchsJoues || 0}</td>
                     <td class="vnd">${m.victoires || 0}V ${m.nuls || 0}N ${m.defaites || 0}D</td>
                     <td>
@@ -601,6 +693,32 @@
                     membreAExpulser = btn.dataset.id;
                     document.getElementById('modal-expulser-nom').textContent = `Exclure ${btn.dataset.nom} du groupe ?`;
                     document.getElementById('modal-expulser').classList.remove('hidden');
+                });
+            });
+
+            // Changement de division
+            tbody.querySelectorAll('.div-assign-sel').forEach(sel => {
+                sel.addEventListener('change', async () => {
+                    const jUid = sel.dataset.uid;
+                    const val = sel.value ? Number(sel.value) : null;
+                    try {
+                        await updateDoc(doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, jUid), { sousGroupe: val });
+                        showMsg(document.createElement('div'), 'Division mise à jour.', 'success');
+                        // Mettre à jour le badge affiché
+                        const badge = sel.previousElementSibling;
+                        if (badge && badge.tagName === 'SPAN') {
+                            if (val) {
+                                badge.className = `div-badge-${val}`;
+                                badge.textContent = divLabel(val);
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.textContent = '';
+                                badge.style.display = 'none';
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Erreur changement division:', err);
+                    }
                 });
             });
         }
@@ -751,6 +869,28 @@
         // ========== INSCRIPTIONS (vue admin) ==========
         let currentOpenMatch = null;
 
+        function _buildOverflowSection(match) {
+            const n = groupe.nombreSousGroupes || 1;
+            if (n <= 1) return '';
+            const cibles = match.sousGroupesCibles;
+            if (!cibles || !cibles.length) return ''; // Ouvert à tous, pas besoin d'overflow
+
+            const allDivs = Array.from({ length: n }, (_, i) => i + 1);
+            const manquantes = allDivs.filter(d => !cibles.includes(d));
+            if (!manquantes.length) return ''; // Déjà ouvert à toutes les divisions
+
+            const btns = manquantes.map(d =>
+                `<button class="btn-extend-div" data-div="${d}" data-match="${match.id}">+ ${escapeHtml(divLabel(d))}</button>`
+            ).join('');
+            const btnAll = `<button class="btn-extend-div" data-div="all" data-match="${match.id}">Toutes les divisions</button>`;
+
+            return `
+                <div class="overflow-section">
+                    <p>Ouvrir aussi les inscriptions à :</p>
+                    ${btns}${btnAll}
+                </div>`;
+        }
+
         async function loadInscriptionsAdmin() {
             const container = document.getElementById('inscriptions-admin-content');
             try {
@@ -812,6 +952,7 @@
                     <button id="btn-generer-equipes" class="btn-action btn-primary" style="margin-top:1.5rem">🎲 Générer les équipes</button>
                     <div id="equipes-generees" class="hidden" style="margin-top:1.5rem"></div>
                     ` : ''}
+                    ${_buildOverflowSection(match)}
                 `;
 
                 document.getElementById('btn-generer-equipes')?.addEventListener('click', async () => {
@@ -824,6 +965,31 @@
                         btn.disabled = false;
                         btn.textContent = '🎲 Régénérer les équipes';
                     }
+                });
+
+                // Overflow : étendre les divisions ciblées
+                container.querySelectorAll('.btn-extend-div').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const matchId = btn.dataset.match;
+                        const divVal = btn.dataset.div;
+                        const n = groupe.nombreSousGroupes || 1;
+                        const cibles = match.sousGroupesCibles || [];
+                        const nouvelles = divVal === 'all'
+                            ? Array.from({ length: n }, (_, i) => i + 1)
+                            : [...new Set([...cibles, Number(divVal)])];
+                        btn.disabled = true;
+                        try {
+                            await updateDoc(
+                                doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE, matchId),
+                                { sousGroupesCibles: nouvelles }
+                            );
+                            match.sousGroupesCibles = nouvelles;
+                            loadInscriptionsAdmin();
+                        } catch (err) {
+                            console.error('Erreur overflow:', err);
+                            btn.disabled = false;
+                        }
+                    });
                 });
 
             } catch (err) {
@@ -841,7 +1007,7 @@
             } catch (_) {}
 
             const synPair = (u1, u2) => synergiesMap[[u1, u2].sort().join('-')] || 0;
-            const teamRating = eq => eq.reduce((s, j) => s + (j.impactRating || 1000), 0);
+            const teamRating = eq => eq.reduce((s, j) => s + (j.rating || 1000), 0);
             const teamSyn = eq => {
                 let s = 0;
                 for (let i = 0; i < eq.length; i++)
@@ -857,9 +1023,9 @@
             // 2. Snake draft initial sur le rating (base équilibrée)
             const enriched = joueurs.map(j => {
                 const membre = membresActifsCache.find(m => m.id === (j.uid || j.id));
-                return { ...j, impactRating: membre?.impactRating ?? 1000 };
+                return { ...j, rating: membre?.rating ?? membre?.impactRating ?? 1000 };
             });
-            const sorted = [...enriched].sort((a, b) => (b.impactRating || 1000) - (a.impactRating || 1000));
+            const sorted = [...enriched].sort((a, b) => (b.rating || 1000) - (a.rating || 1000));
             let equipeA = [], equipeB = [];
             sorted.forEach((j, i) => {
                 const cycle = Math.floor(i / 2);
@@ -892,12 +1058,12 @@
             const hasSyn = Object.keys(synergiesMap).length > 0;
             const synLabel = hasSyn
                 ? `<p style="color:var(--text-muted);font-size:.8rem;margin-top:.5rem">⚡ Synergies prises en compte · Δrating: ${Math.abs(teamRating(equipeA) - teamRating(equipeB))}</p>`
-                : `<p style="color:var(--text-muted);font-size:.8rem;margin-top:.5rem">📊 Basé sur l'Impact Rating uniquement (pas encore de synergies)</p>`;
+                : `<p style="color:var(--text-muted);font-size:.8rem;margin-top:.5rem">📊 Basé sur le Rating uniquement (pas encore de synergies)</p>`;
 
             const renderTeam = (equipe, label) => `
                 <div class="rating-team">
                     <h4 class="${label === 'A' ? 'team-a-label' : 'team-b-label'}">Équipe ${label} — rating moy. ${Math.round(teamRating(equipe) / equipe.length)}</h4>
-                    ${equipe.map(j => `<div class="rating-change-row"><span>${escapeHtml(j.displayName)}</span><span class="pos-badge ${escapeHtml((j.position||'').toLowerCase())}">${escapeHtml(j.position)||'—'}</span><span style="color:var(--text-muted)">${j.impactRating||1000}</span></div>`).join('')}
+                    ${equipe.map(j => `<div class="rating-change-row"><span>${escapeHtml(j.displayName)}</span><span class="pos-badge ${escapeHtml((j.position||'').toLowerCase())}">${escapeHtml(j.position)||'—'}</span><span style="color:var(--text-muted)">${j.rating||1000}</span></div>`).join('')}
                 </div>`;
 
             const container = document.getElementById('equipes-generees');
@@ -918,6 +1084,7 @@
             const date = document.getElementById('creneau-date').value;
             const heure = getTimeSelect('creneau-heure');
             const max = parseInt(document.getElementById('creneau-max').value) || groupe?.maxJoueursMatch || 10;
+            const sousGroupesCibles = getDivCheckboxes('creneau-div');
             const msg = document.getElementById('creneau-msg');
             const btn = document.getElementById('btn-creer-creneau');
 
@@ -931,13 +1098,17 @@
 
             btn.disabled = true; btn.textContent = '...';
             try {
-                await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), {
+                const slotData = {
                     dateMatch: dateMatch.toISOString(),
                     maxJoueurs: max,
                     statut: 'ouvert',
                     confirmedCount: 0,
                     createdAt: new Date().toISOString()
-                });
+                };
+                if (sousGroupesCibles && sousGroupesCibles.length) {
+                    slotData.sousGroupesCibles = sousGroupesCibles;
+                }
+                await addDoc(collection(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.MATCHS_SEMAINE), slotData);
                 showMsg(msg, '✅ Créneau créé — les inscriptions sont ouvertes !', 'success');
                 document.getElementById('creneau-form-wrapper').classList.add('hidden');
                 document.getElementById('creneau-toggle-icon').textContent = '＋';
@@ -1015,9 +1186,9 @@
                 const j = {
                     ...joueur,
                     positionPrincipale: joueur.position,
-                    impactRating: typeof joueur.impactRating === 'number' && !isNaN(joueur.impactRating)
-                        ? joueur.impactRating
-                        : 1000
+                    rating: typeof joueur.rating === 'number' && !isNaN(joueur.rating)
+                        ? joueur.rating
+                        : (joueur.impactRating ?? 1000),
                 };
                 if (checked.value === 'A') equipeA.push(j);
                 else equipeB.push(j);
@@ -1039,7 +1210,7 @@
             btn.disabled = true; btn.textContent = '⏳ Calcul en cours...';
 
             try {
-                const changements = calculerChangementsMatch(equipeA, equipeB, scoreA, scoreB, [], []);
+                const changements = calculerChangementsMatch(equipeA, equipeB, scoreA, scoreB);
                 const resultatA = scoreA > scoreB ? 'victoire' : scoreA < scoreB ? 'defaite' : 'nul';
                 const resultatB = scoreB > scoreA ? 'victoire' : scoreB < scoreA ? 'defaite' : 'nul';
 
@@ -1078,11 +1249,11 @@
                         const res = equipeA.includes(joueur) ? resultatA : resultatB;
                         const ref = doc(db, COLLECTIONS.GROUPES, groupeId, COLLECTIONS.JOUEURS, joueur.id);
                         tx.update(ref, {
-                            impactRating: delta.nouveau,
+                            rating:      delta.nouveau,
                             matchsJoues: (joueur.matchsJoues || 0) + 1,
-                            victoires: (joueur.victoires || 0) + (res === 'victoire' ? 1 : 0),
-                            nuls: (joueur.nuls || 0) + (res === 'nul' ? 1 : 0),
-                            defaites: (joueur.defaites || 0) + (res === 'defaite' ? 1 : 0)
+                            victoires:   (joueur.victoires || 0) + (res === 'victoire' ? 1 : 0),
+                            nuls:        (joueur.nuls || 0)      + (res === 'nul'      ? 1 : 0),
+                            defaites:    (joueur.defaites || 0)  + (res === 'defaite'  ? 1 : 0),
                         });
                     });
                 });
@@ -1187,5 +1358,6 @@
 
         init();
     </script>
+    <script src="/js/pwa.js"></script>
 </body>
 </html>

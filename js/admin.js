@@ -461,7 +461,7 @@ async function handleMatchSubmit(e) {
                 const butsEncaisses = equipe1Ids.includes(joueurId) ? score2 : score1;
                 
                 // Stats de base
-                joueur.impactRating = changements[joueurId].nouveau;
+                joueur.rating = changements[joueurId].nouveau;
                 joueur.matchsJoues = (joueur.matchsJoues || 0) + 1;
                 
                 if (equipe === 'victoire') joueur.victoires = (joueur.victoires || 0) + 1;
