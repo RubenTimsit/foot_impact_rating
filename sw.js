@@ -34,7 +34,7 @@ messaging.onBackgroundMessage((payload) => {
 //   - Network-first : pages HTML       → toujours à jour, fallback cache si offline
 //   - Bypass        : requêtes Firebase → Firestore gère son propre cache offline
 
-const CACHE_VERSION = 'v39-insc-statut-fix';
+const CACHE_VERSION = 'v40-inscription-double';
 const CACHE_STATIC  = `mpm-static-${CACHE_VERSION}`;
 const CACHE_PAGES   = `mpm-pages-${CACHE_VERSION}`;
 
